@@ -1,0 +1,26 @@
+# Visual Studio
+.vs/
+*.VC.db
+*.VC.opendb
+*.suo
+
+# Unreal
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Build files
+*.pdb
+*.obj
+*.pch
+*.ipch
+*.log
+
+# User files
+*.opensdf
+*.sdf
+
+# OS
+Thumbs.db
+.DS_Store

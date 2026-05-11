@@ -8,7 +8,7 @@ public class NavesArcade : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        // Añadimos "UMG", "Slate" y "SlateCore" para que funcionen los Widgets
+        // Combinamos UMG (para la interfaz) con AIModule y GameplayTasks (para los enemigos)
         PublicDependencyModuleNames.AddRange(new string[] {
             "Core",
             "CoreUObject",
@@ -16,7 +16,11 @@ public class NavesArcade : ModuleRules
             "InputCore",
             "UMG",
             "Slate",
-            "SlateCore"
+            "SlateCore",
+            "AIModule",
+            "GameplayTasks"
         });
+
+        PrivateDependencyModuleNames.AddRange(new string[] { });
     }
 }

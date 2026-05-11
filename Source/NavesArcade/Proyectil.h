@@ -11,21 +11,26 @@ class NAVESARCADE_API AProyectil : public AActor
 {
 	GENERATED_BODY()
 
-	public:
-		AProyectil();
+public:
+	AProyectil();
 
-	protected:
-		virtual void BeginPlay() override;
+protected:
+	virtual void BeginPlay() override;
 
-		UPROPERTY(VisibleAnywhere, Category = "Componentes")
-		class USphereComponent* Colision;
+	// Componentes necesarios para la lógica del .cpp
+	UPROPERTY(VisibleAnywhere, Category = "Colision")
+	class USphereComponent* EsferaColision;
 
-		UPROPERTY(VisibleAnywhere, Category = "Componentes")
-		class UStaticMeshComponent* Malla;
+	UPROPERTY(VisibleAnywhere, Category = "Visual")
+	class UStaticMeshComponent* MallaProyectil;
 
-		UPROPERTY(VisibleAnywhere, Category = "Movimiento")
-		class UProjectileMovementComponent* Movimiento;
+	UPROPERTY(VisibleAnywhere, Category = "Movimiento")
+	class UProjectileMovementComponent* MovimientoProyectil;
 
-	public:
-		virtual void Tick(float DeltaTime) override;
-	};
+	// Función de impacto
+	UFUNCTION()
+	void AlImpactar(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+public:
+	virtual void Tick(float DeltaTime) override;
+};

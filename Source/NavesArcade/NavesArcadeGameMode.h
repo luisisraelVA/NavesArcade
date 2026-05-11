@@ -13,7 +13,7 @@ class ANavesArcadeGameMode : public AGameModeBase
 
 public:
 	ANavesArcadeGameMode();
+
+protected:
+	virtual void BeginPlay() override;
 };
-
-
-

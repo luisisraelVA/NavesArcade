@@ -6,6 +6,8 @@
 #include "GameFramework/Pawn.h"
 #include "NaveJugador.generated.h"
 
+class UInventoryComponent;
+
 UCLASS()
 class NAVESARCADE_API ANaveJugador : public APawn
 {
@@ -24,7 +26,6 @@ protected:
 	class USpringArmComponent* BrazoCamara;
 
 	class UCameraComponent* CamaraNave;
-
 
 	float IntegridadEstructural;
 
@@ -52,4 +53,17 @@ public:
 
 
 	void RecolectarEnergia(float Cantidad);
+
+
+private:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes", meta = (AllowPrivateAccess = "true"))
+	class UInventoryComponent* Inventario;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes", meta = (AllowPrivateAccess = "true"))
+	class UNaveFacade* FachadaNave;
+
+public:
+
+	FORCEINLINE class UInventoryComponent* GetInventario() const { return Inventario; }
 };

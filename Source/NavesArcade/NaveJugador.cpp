@@ -6,6 +6,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
+#include "InventoryComponent.h"
+#include "NaveFacade.h"
 #include "UObject/ConstructorHelpers.h"
 
 
@@ -36,6 +38,9 @@ ANaveJugador::ANaveJugador()
 	VelocidadMovimiento = 1000.0f;
 	VelocidadRotacion = 100.0f;
 	EnergiaActual = 0.0f;
+
+	Inventario = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventario"));
+	FachadaNave = CreateDefaultSubobject<UNaveFacade>(TEXT("FachadaNave"));
 }
 
 

@@ -2,9 +2,12 @@
 
 #include "NavesArcadeGameMode.h"
 #include "NaveJugador.h"
+#include "DodgerHUD.h"
 
 ANavesArcadeGameMode::ANavesArcadeGameMode()
 {
 	// set default pawn class to our flying pawn
 	DefaultPawnClass = ANaveJugador::StaticClass();
+
+	HUDClass = ADodgerHUD::StaticClass();
 }

@@ -6,6 +6,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "NaveJugador.h"
+#include "NaveFacade.h"
+
 
 ANucleoEnergia::ANucleoEnergia()
 {
@@ -47,17 +49,22 @@ void ANucleoEnergia::AlSuperponerse(UPrimitiveComponent* OverlappedComponent, AA
 {
 	if (OtherActor && OtherActor != this)
 	{
-		
-		ANaveJugador* NaveChocada = Cast<ANaveJugador>(OtherActor);
+		ANaveJugador* Nave = Cast<ANaveJugador>(OtherActor);
 
-		if (NaveChocada)
+		if (Nave)
 		{
-			
-			NaveChocada->RecolectarEnergia(ValorEnergia);
+			UNaveFacade* Facade = Nave->FindComponentByClass<UNaveFacade>();
 
-			
-			Destroy();
+			if (Facade)
+			{
+				Facade->ProcesarRecoleccionEnergia(ValorEnergia);
+
+				Destroy();
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Nave detectada pero no tiene UNaveFacade asignada"));
+			}
 		}
 	}
 }
-

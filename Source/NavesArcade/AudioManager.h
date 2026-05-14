@@ -6,8 +6,9 @@
 #include "Components/ActorComponent.h"
 #include "AudioManager.generated.h"
 
+class USoundBase;
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class NAVESARCADE_API UAudioManager : public UActorComponent
 {
 	GENERATED_BODY()
@@ -15,13 +16,12 @@ class NAVESARCADE_API UAudioManager : public UActorComponent
 public:
 	UAudioManager();
 
-	// Funciones para reproducir sonidos específicos
 	void PlaySoundDisparo();
 	void PlaySoundExplosion();
 	void PlaySoundSalto();
+	void PlaySoundBoss();
 
 protected:
-	// Punteros para los archivos de sonido (.wav / .mp3 importados)
 	UPROPERTY(EditAnywhere, Category = "Sonidos")
 	USoundBase* SonidoDisparo;
 
@@ -30,4 +30,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Sonidos")
 	USoundBase* SonidoSalto;
+
+	UPROPERTY(EditAnywhere, Category = "Sonidos")
+	USoundBase* SonidoBoss;
 };

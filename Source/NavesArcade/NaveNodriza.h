@@ -1,10 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "NaveNodriza.generated.h"
+
+class UStaticMeshComponent;
+class UPrimitiveComponent;
+class AProyectil;
 
 UCLASS()
 class NAVESARCADE_API ANaveNodriza : public APawn
@@ -14,17 +17,21 @@ class NAVESARCADE_API ANaveNodriza : public APawn
 public:
 	ANaveNodriza();
 
+	virtual void Tick(float DeltaTime) override;
+
+	void RecibirDanio(float Cantidad);
+
 protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleAnywhere, Category = "Visual")
-	class UStaticMeshComponent* MallaPrincipal;
+	UStaticMeshComponent* MallaPrincipal;
 
 	UPROPERTY(VisibleAnywhere, Category = "Visual")
-	class UStaticMeshComponent* AlaIzquierda;
+	UStaticMeshComponent* AlaIzquierda;
 
 	UPROPERTY(VisibleAnywhere, Category = "Visual")
-	class UStaticMeshComponent* AlaDerecha;
+	UStaticMeshComponent* AlaDerecha;
 
 	UPROPERTY(EditAnywhere, Category = "Combate")
 	float VidaJefe;
@@ -32,11 +39,22 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Combate")
 	float DanioColision;
 
+	UPROPERTY(EditAnywhere, Category = "Combate")
+	float VelocidadRotacion;
+
+	UPROPERTY(EditAnywhere, Category = "Combate")
+	float TiempoEntreAtaques;
+
+	float TiempoAtaqueActual;
+
 	UFUNCTION()
-	void AlChocar(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	void AlChocar(
+		UPrimitiveComponent* HitComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		FVector NormalImpulse,
+		const FHitResult& Hit
+	);
 
-public:
-	virtual void Tick(float DeltaTime) override;
-
-	void RecibirDanio(float Cantidad);
+	void EjecutarAtaque();
 };

@@ -20,9 +20,8 @@ ANaveAcechadora::ANaveAcechadora()
 		MallaEnemigo->SetStaticMesh(MeshAsset.Object);
 	}
 
-	VelocidadPersecucion = 400.0f; // Velocidad para naves acechadoras [cite: 56, 134]
+	VelocidadPersecucion = 400.0f; // Velocidad para naves acechadoras
 
-	// Estos identificadores solo existen en APawn [cite: 16]
 	AIControllerClass = AEnemyController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
@@ -41,7 +40,7 @@ void ANaveAcechadora::Tick(float DeltaTime)
 	{
 		FVector Direccion = (TargetJugador->GetActorLocation() - GetActorLocation()).GetSafeNormal();
 
-		// Movimiento de persecución activa [cite: 87, 134]
+		// Movimiento de persecución activa
 		AddActorWorldOffset(Direccion * VelocidadPersecucion * DeltaTime, true);
 		SetActorRotation(Direccion.Rotation());
 	}

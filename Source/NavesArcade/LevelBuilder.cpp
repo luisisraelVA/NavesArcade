@@ -24,8 +24,6 @@ void ALevelBuilder::SpawnAsteroides(int32 Cantidad)
 	{
 		FVector Loc = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), FVector(2000, 2000, 500));
 		GetWorld()->SpawnActor<AAsteroideBase>(ClaseAsteroide, Loc, FRotator::ZeroRotator);
-
-		// Aquí podrías usar FabricaDeFase->ObtenerVelocidadAmbiente() para ajustar los asteroides
 	}
 }
 
@@ -36,8 +34,6 @@ void ALevelBuilder::SpawnEnemigos(int32 Cantidad)
 	for (int32 i = 0; i < Cantidad; i++)
 	{
 		FVector Loc = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), FVector(3000, 3000, 500));
-
-		// Delegamos la creación del enemigo a la fábrica de la fase actual [cite: 3, 4]
 		FabricaDeFase->CrearEnemigo(GetWorld(), Loc);
 	}
 }

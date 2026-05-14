@@ -5,21 +5,23 @@
 
 AAsteroideDinamico::AAsteroideDinamico()
 {
-	
 	PrimaryActorTick.bCanEverTick = true;
 
-	
 	VelocidadMovimiento = 500.0f;
-	DireccionMovimiento = FVector(-1.0f, 0.0f, 0.0f); 
+	DireccionMovimiento = FVector(-1.0f, 0.0f, 0.0f);
 }
 
 void AAsteroideDinamico::Tick(float DeltaTime)
 {
-	
 	Super::Tick(DeltaTime);
 
-	
-	FVector NuevaPosicion = DireccionMovimiento.GetSafeNormal() * VelocidadMovimiento * DeltaTime;
+	FVector Movimiento = DireccionMovimiento.GetSafeNormal() * VelocidadMovimiento * DeltaTime;
 
-	AddActorWorldOffset(NuevaPosicion, true);
+	AddActorWorldOffset(Movimiento, true);
+}
+
+void AAsteroideDinamico::ConfigurarMovimiento(float NuevaVelocidad, FVector NuevaDireccion)
+{
+	VelocidadMovimiento = NuevaVelocidad;
+	DireccionMovimiento = NuevaDireccion.GetSafeNormal();
 }

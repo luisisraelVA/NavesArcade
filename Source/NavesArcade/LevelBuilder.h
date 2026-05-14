@@ -18,16 +18,14 @@ public:
 	// Asigna la fábrica (Fase 1 o Fase Final) que usará el Builder
 	void SetFabrica(TScriptInterface<ILevelFab> NuevaFabrica);
 
-	// Métodos de la "receta" de construcción 
-	void SpawnAsteroides(int32 Cantidad);
+	void SpawnAsteroides(int32 Cantidad, float VelocidadAsteroide);
 	void SpawnEnemigos(int32 Cantidad);
 	void SpawnEnergia(int32 Cantidad);
+	void SpawnBossFinal(FVector Ubicacion);
 
 protected:
-	// Referencia a la fábrica actual para obtener enemigos y velocidades [cite: 3, 4]
 	TScriptInterface<ILevelFab> FabricaDeFase;
 
-	// Clases base para el spawn (Configurables en el editor o vía código)
 	UPROPERTY(EditAnywhere, Category = "Config")
 	TSubclassOf<class AAsteroideBase> ClaseAsteroide;
 

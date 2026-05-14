@@ -15,16 +15,24 @@ class NAVESARCADE_API ALevelDirector : public AActor
 public:
 	ALevelDirector();
 
-	// Asigna el constructor que el director va a manejar
 	void SetBuilder(ALevelBuilder* NuevoBuilder);
 
-	// Receta para un nivel de Introducción (Fase 1: Niveles 1-3)
-	void ConstruirNivelIntroduccion();
+	void ConstruirNivel1();
+	void ConstruirNivel2();
+	void ConstruirNivel3();
 
-	// Receta para un nivel de Densidad Máxima (Fase 4: Niveles 10-12)
-	void ConstruirNivelFinal();
+	void ConstruirNivel4();
+	void ConstruirNivel5();
+	void ConstruirNivel6();
+
+	void ConstruirNivel7();
+	void ConstruirNivel8();
+	void ConstruirNivel9();
+
+	void ConstruirNivel10();
+	void ConstruirNivel11();
+	void ConstruirNivel12();
 
 private:
-	// Referencia al constructor actual 
 	ALevelBuilder* Builder;
 };

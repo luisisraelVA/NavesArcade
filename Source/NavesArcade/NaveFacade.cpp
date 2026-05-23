@@ -5,6 +5,10 @@
 #include "WeaponSystem.h"
 #include "AudioManager.h" // Incluimos el header para poder usar sus funciones
 
+// NUEVOS INCLUDES PARA EL SPAWN EN C++ PURO
+#include "Proyectil.h"            
+#include "Engine/World.h"
+
 UNaveFacade::UNaveFacade()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -55,16 +59,30 @@ void UNaveFacade::RecibirImpacto(float Dano)
 	}
 }
 
+// CORRECCIÓN DEFINITIVA EN EL FLUJO DE DISPARO:
 void UNaveFacade::EjecutarDisparo()
 {
-	if (SistemaArmas && NaveDuenia)
+	// Si por el orden de inicialización de Unreal NaveDuenia aún está vacío, lo asignamos aquí de golpe
+	if (!NaveDuenia)
 	{
-		FVector SpawnLoc = NaveDuenia->GetActorLocation() + (NaveDuenia->GetActorForwardVector() * 100.0f);
+		NaveDuenia = Cast<ANaveJugador>(GetOwner());
+	}
+
+	// 1. Verificamos que la Fachada conozca a la nave dueña y que el mundo exista
+	if (NaveDuenia && GetWorld())
+	{
+		// 2. Calculamos la posición adelante (X + 150) para evitar que la colisión del proyectil choque con la nave al nacer
+		FVector SpawnLoc = NaveDuenia->GetActorLocation() + (NaveDuenia->GetActorForwardVector() * 150.0f);
 		FRotator SpawnRot = NaveDuenia->GetActorRotation();
 
-		SistemaArmas->Disparar(SpawnLoc, SpawnRot);
+		FActorSpawnParameters ParametrosSpawn;
+		ParametrosSpawn.Owner = NaveDuenia;
+		ParametrosSpawn.Instigator = NaveDuenia->GetInstigator();
 
-		// Reproducir sonido de disparo
+		// 3. Spawneamos el proyectil directamente en el mundo usando código puro en tiempo de ejecución
+		GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), SpawnLoc, SpawnRot, ParametrosSpawn);
+
+		// 4. Reproducimos el sonido del disparo que programó tu grupo
 		if (AudioManager)
 		{
 			AudioManager->PlaySoundDisparo();

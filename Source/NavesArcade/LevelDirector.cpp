@@ -21,7 +21,7 @@ void ALevelDirector::ConstruirNivel1()
 	if (!Builder) return;
 
 	Builder->SpawnAsteroides(5, 300.0f);
-	Builder->SpawnEnergia(8);
+	Builder->SpawnEnergia(8);   // 8 cristales de 20 de energía = 160 disponibles (Sobrado para pasar)
 	Builder->SpawnEnemigos(1);
 }
 
@@ -29,16 +29,16 @@ void ALevelDirector::ConstruirNivel2()
 {
 	if (!Builder) return;
 
-	Builder->SpawnAsteroides(8, 400.0f);
+	Builder->SpawnAsteroides(8, 400.0f); // Más asteroides y más rápidos
 	Builder->SpawnEnergia(7);
-	Builder->SpawnEnemigos(2);
+	Builder->SpawnEnemigos(2);          // El doble de drones custodiando
 }
 
 void ALevelDirector::ConstruirNivel3()
 {
 	if (!Builder) return;
 
-	Builder->SpawnAsteroides(12, 500.0f);
+	Builder->SpawnAsteroides(12, 500.0f); // Lluvia masiva de conos explosivos
 	Builder->SpawnEnergia(6);
 	Builder->SpawnEnemigos(3);
 }

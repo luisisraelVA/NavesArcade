@@ -6,7 +6,6 @@
 #include "GameFramework/Pawn.h"
 #include "NaveJugador.generated.h"
 
-// Forward declarations para evitar errores de compilación
 class UInventoryComponent;
 class UNaveFacade;
 class AProyectil;
@@ -25,7 +24,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	// --- COMPONENTES VISUALES ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual")
 	class UStaticMeshComponent* MallaNave;
 
@@ -35,18 +33,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camara")
 	class UCameraComponent* CamaraNave;
 
-	// --- COMBATE ---
 	UPROPERTY(EditAnywhere, Category = "Combate")
 	TSubclassOf<AProyectil> ClaseProyectil;
 
-	void Disparar();
+	// Función puente nativa para evitar crash de inputs
+	void InicializarDisparo();
 
-	// --- ATRIBUTOS ---
 	float IntegridadEstructural;
 	float VelocidadMovimiento;
 	float VelocidadRotacion;
 
-	// --- MÉTODOS DE MOVIMIENTO ---
 	void RotarDerecha(float Valor);
 	void RotarArriba(float Valor);
 	void MoverAdelante(float Valor);
@@ -59,7 +55,6 @@ public:
 	void RecolectarEnergia(float Cantidad);
 
 private:
-	// --- COMPONENTES DE SISTEMA ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes", meta = (AllowPrivateAccess = "true"))
 	UInventoryComponent* Inventario;
 
@@ -67,6 +62,8 @@ private:
 	UNaveFacade* FachadaNave;
 
 public:
-	// Getter para el inventario
 	FORCEINLINE UInventoryComponent* GetInventario() const { return Inventario; }
+
+	// Getter público para que la fachada extraiga la vida real
+	FORCEINLINE float GetIntegridadEstructural() const { return IntegridadEstructural; }
 };

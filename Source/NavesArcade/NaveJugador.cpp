@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "NaveJugador.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -10,7 +9,7 @@
 #include "NaveFacade.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/World.h"
-#include "Proyectil.h" // Importante incluir el header del nuevo proyectil
+#include "Proyectil.h" 
 
 ANaveJugador::ANaveJugador()
 {
@@ -35,10 +34,11 @@ ANaveJugador::ANaveJugador()
 	IntegridadEstructural = 100.0f;
 	VelocidadMovimiento = 1000.0f;
 	VelocidadRotacion = 100.0f;
-	EnergiaActual = 0.0f;
 
 	Inventario = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventario"));
 	FachadaNave = CreateDefaultSubobject<UNaveFacade>(TEXT("FachadaNave"));
+
+	ClaseProyectil = AProyectil::StaticClass();
 }
 
 void ANaveJugador::BeginPlay()
@@ -58,8 +58,16 @@ void ANaveJugador::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAxis("RotarDerecha", this, &ANaveJugador::RotarDerecha);
 	PlayerInputComponent->BindAxis("RotarArriba", this, &ANaveJugador::RotarArriba);
 
-	// Vinculamos la acción de disparar (Debes crear "Disparar" en Project Settings -> Input)
-	PlayerInputComponent->BindAction("Disparar", IE_Pressed, this, &ANaveJugador::Disparar);
+	// SOLUCIÓN AL CRASH: El Input mapea al Pawn directamente
+	PlayerInputComponent->BindAction("Disparar", IE_Pressed, this, &ANaveJugador::InicializarDisparo);
+}
+
+void ANaveJugador::InicializarDisparo()
+{
+	if (FachadaNave)
+	{
+		FachadaNave->EjecutarDisparo();
+	}
 }
 
 void ANaveJugador::MoverAdelante(float Valor)
@@ -89,22 +97,6 @@ void ANaveJugador::RotarArriba(float Valor)
 	}
 }
 
-void ANaveJugador::Disparar()
-{
-	if (ClaseProyectil)
-	{
-		// Spawn un poco delante de la nave para evitar que choque con ella misma
-		FVector UbicacionSpawn = GetActorLocation() + GetActorForwardVector() * 100.0f;
-		FRotator RotacionSpawn = GetActorRotation();
-
-		FActorSpawnParameters ParametrosSpawn;
-		ParametrosSpawn.Owner = this;
-		ParametrosSpawn.Instigator = GetInstigator();
-
-		GetWorld()->SpawnActor<AProyectil>(ClaseProyectil, UbicacionSpawn, RotacionSpawn, ParametrosSpawn);
-	}
-}
-
 void ANaveJugador::RecibirDano(float CantidadDano)
 {
 	IntegridadEstructural -= CantidadDano;
@@ -125,9 +117,8 @@ void ANaveJugador::RecibirDano(float CantidadDano)
 
 void ANaveJugador::RecolectarEnergia(float Cantidad)
 {
-	EnergiaActual += Cantidad;
-	if (GEngine)
+	if (FachadaNave)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("¡Núcleo recogido! Energía total: %f"), EnergiaActual));
+		FachadaNave->ProcesarRecoleccionEnergia(Cantidad);
 	}
 }

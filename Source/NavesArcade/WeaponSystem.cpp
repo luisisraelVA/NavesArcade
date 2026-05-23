@@ -4,18 +4,24 @@
 #include "Proyectil.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
+#include "GameFramework/Pawn.h" // Cabecera necesaria para el Cast del Instigator
 
 UWeaponSystem::UWeaponSystem()
 {
 	PrimaryComponentTick.bCanEverTick = false; // Eficiencia: No necesita ejecutarse cada frame
-
-	CadenciaDisparo = 0.5f; // Medio segundo entre disparos por defecto
+	CadenciaDisparo = 0.3f; // Tiempo de enfriamiento entre ráfagas
 	bPuedeDisparar = true;
 }
 
 void UWeaponSystem::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// C++ Puro: Si no se asigna en editor, forzamos la clase estática nativa
+	if (!ClaseProyectil)
+	{
+		ClaseProyectil = AProyectil::StaticClass();
+	}
 }
 
 void UWeaponSystem::Disparar(FVector Ubicacion, FRotator Rotacion)
@@ -29,7 +35,7 @@ void UWeaponSystem::Disparar(FVector Ubicacion, FRotator Rotacion)
 		SpawnParams.Owner = GetOwner();
 		SpawnParams.Instigator = Cast<APawn>(GetOwner());
 
-		// POO: Delegamos la creación del proyectil al motor usando la clase configurada
+		// Delegamos la creación del proyectil al motor
 		World->SpawnActor<AProyectil>(ClaseProyectil, Ubicacion, Rotacion, SpawnParams);
 
 		// Sistema de enfriamiento (Cooldown)

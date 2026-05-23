@@ -3,9 +3,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "InventoryComponent.h"
+#include "NaveJugador.h"
 #include "NaveFacade.generated.h"
 
-// Forward Declarations para mejorar tiempos de compilación
 class ANaveJugador;
 class UInventoryComponent;
 class UWeaponSystem;
@@ -17,7 +18,6 @@ class NAVESARCADE_API UNaveFacade : public UActorComponent
 	GENERATED_BODY()
 
 public:
-	// Constructor
 	UNaveFacade();
 
 protected:
@@ -32,23 +32,16 @@ protected:
 	UPROPERTY()
 	UWeaponSystem* SistemaArmas;
 
-	// --- SUBCOMPONENTE DE AUDIO ---
-	// VisibleAnywhere permite que veamos sus propiedades (los slots de sonido) en el editor
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio", meta = (AllowPrivateAccess = "true"))
 	UAudioManager* AudioManager;
 
 public:
-	// --- MÉTODOS DE LA FACHADA ---
-
-	/** Procesa la recolección de energía e invoca sonido de recolección */
 	void ProcesarRecoleccionEnergia(float Cantidad);
-
-	/** Maneja el daño recibido e invoca sonido de impacto */
 	void RecibirImpacto(float Dano);
-
-	/** Ejecuta el disparo e invoca sonido de arma */
 	void EjecutarDisparo();
-
-	/** Consulta si se cumplen los requisitos de energía */
 	bool PuedeSaltarDeNivel() const;
+
+	// CONEXIÓN AL HUD: Getters para actualizar la UI en tiempo real
+	FORCEINLINE float ObtenerVidaNave() const { return NaveDuenia ? NaveDuenia->GetIntegridadEstructural() : 0.0f; }
+	FORCEINLINE float ObtenerEnergiaNave() const { return Inventario ? Inventario->GetEnergiaActual() : 0.0f; }
 };

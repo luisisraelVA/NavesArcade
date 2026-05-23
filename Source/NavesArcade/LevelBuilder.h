@@ -18,6 +18,9 @@ public:
 	// Asigna la fábrica (Fase 1 o Fase Final) que usará el Builder
 	void SetFabrica(TScriptInterface<ILevelFab> NuevaFabrica);
 
+	// Cambia el tipo de asteroide que se va a spawnear dinámicamente
+	void SetClaseAsteroide(TSubclassOf<class AAsteroideBase> NuevaClase);
+
 	void SpawnAsteroides(int32 Cantidad, float VelocidadAsteroide);
 	void SpawnEnemigos(int32 Cantidad);
 	void SpawnEnergia(int32 Cantidad);

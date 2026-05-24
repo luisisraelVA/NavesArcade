@@ -1,10 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "LevelFab.h" // Interfaz de las fábricas de fase
+#include "LevelFab.h"
 #include "LevelBuilder.generated.h"
 
 UCLASS()
@@ -14,24 +12,28 @@ class NAVESARCADE_API ALevelBuilder : public AActor
 
 public:
 	ALevelBuilder();
+	virtual void BeginPlay() override;
 
-	// Asigna la fábrica (Fase 1 o Fase Final) que usará el Builder
 	void SetFabrica(TScriptInterface<ILevelFab> NuevaFabrica);
-
-	// Cambia el tipo de asteroide que se va a spawnear dinámicamente
 	void SetClaseAsteroide(TSubclassOf<class AAsteroideBase> NuevaClase);
 
 	void SpawnAsteroides(int32 Cantidad, float VelocidadAsteroide);
-	void SpawnEnemigos(int32 Cantidad);
-	void SpawnEnergia(int32 Cantidad);
-	void SpawnBossFinal(FVector Ubicacion);
+
+	// NUEVO: Función que instanciará una base a la vez
+	void GenerarFaseObjetivo();
 
 protected:
+	UFUNCTION()
+	void GeneracionContinua();
+
+private:
 	TScriptInterface<ILevelFab> FabricaDeFase;
-
-	UPROPERTY(EditAnywhere, Category = "Config")
 	TSubclassOf<class AAsteroideBase> ClaseAsteroide;
-
-	UPROPERTY(EditAnywhere, Category = "Config")
 	TSubclassOf<class ANucleoEnergia> ClaseEnergia;
+
+	FTimerHandle TimerMundoAbierto;
+
+	int32 DensidadAsteroides;
+	float VelocidadGlobal;
+	int32 FaseActualMision; // Guarda en qué núcleo vamos
 };

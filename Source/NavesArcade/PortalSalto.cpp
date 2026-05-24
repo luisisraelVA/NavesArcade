@@ -34,7 +34,7 @@ APortalSalto::APortalSalto()
 		MallaPortal->SetRelativeScale3D(FVector(6.0f, 6.0f, 0.1f));
 	}
 
-	EnergiaRequerida = 60.0f;
+	EnergiaRequerida = 20.0f;
 }
 
 void APortalSalto::BeginPlay()

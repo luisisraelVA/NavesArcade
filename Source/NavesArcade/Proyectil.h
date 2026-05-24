@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -17,7 +15,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	// Componentes necesarios para la lógica del .cpp
 	UPROPERTY(VisibleAnywhere, Category = "Colision")
 	class USphereComponent* EsferaColision;
 
@@ -27,9 +24,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Movimiento")
 	class UProjectileMovementComponent* MovimientoProyectil;
 
-	// Función de impacto
+	// NUEVO: Referencia para cargar efectos visuales (VFX)
+	class UParticleSystem* EfectoExplosion;
+
 	UFUNCTION()
-	void AlImpactar(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	void AlSuperponerse(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 public:
 	virtual void Tick(float DeltaTime) override;

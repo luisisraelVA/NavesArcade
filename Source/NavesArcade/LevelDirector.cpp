@@ -1,7 +1,5 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "LevelDirector.h"
+#include "LevelBuilder.h" // Aseguramos que conozca al Builder
 
 ALevelDirector::ALevelDirector()
 {
@@ -14,119 +12,38 @@ void ALevelDirector::SetBuilder(ALevelBuilder* NuevoBuilder)
 	Builder = NuevoBuilder;
 }
 
-// NIVELES 1, 2, 3
-
 void ALevelDirector::ConstruirNivel1()
 {
 	if (!Builder) return;
 
-	Builder->SpawnAsteroides(5, 300.0f);
-	Builder->SpawnEnergia(8);   // 8 cristales de 20 de energía = 160 disponibles (Sobrado para pasar)
-	Builder->SpawnEnemigos(1);
+	// Ahora solo damos la orden inicial. 
+	// El Builder se encarga de iniciar el Mundo Abierto y la Fase 1 automáticamente.
+	Builder->SpawnAsteroides(100, 600.0f);
 }
 
 void ALevelDirector::ConstruirNivel2()
 {
 	if (!Builder) return;
 
-	Builder->SpawnAsteroides(8, 400.0f); // Más asteroides y más rápidos
-	Builder->SpawnEnergia(7);
-	Builder->SpawnEnemigos(2);          // El doble de drones custodiando
+	// Aumentamos velocidad y densidad de rocas para niveles superiores
+	Builder->SpawnAsteroides(150, 850.0f);
 }
 
 void ALevelDirector::ConstruirNivel3()
 {
 	if (!Builder) return;
 
-	Builder->SpawnAsteroides(12, 500.0f); // Lluvia masiva de conos explosivos
-	Builder->SpawnEnergia(6);
-	Builder->SpawnEnemigos(3);
+	// Nivel Hardcore
+	Builder->SpawnAsteroides(200, 1200.0f);
 }
 
-//NIVELES 4, 5, 6
-
-void ALevelDirector::ConstruirNivel4()
-{
-	if (!Builder) return;
-
-	Builder->SpawnAsteroides(16, 600.0f);
-	Builder->SpawnEnergia(6);
-	Builder->SpawnEnemigos(4);
-}
-
-void ALevelDirector::ConstruirNivel5()
-{
-	if (!Builder) return;
-
-	Builder->SpawnAsteroides(20, 700.0f);
-	Builder->SpawnEnergia(5);
-	Builder->SpawnEnemigos(5);
-}
-
-void ALevelDirector::ConstruirNivel6()
-{
-	if (!Builder) return;
-
-	Builder->SpawnAsteroides(24, 800.0f);
-	Builder->SpawnEnergia(5);
-	Builder->SpawnEnemigos(6);
-}
-
-// NIVELES 7, 8, 9
-
-void ALevelDirector::ConstruirNivel7()
-{
-	if (!Builder) return;
-
-	Builder->SpawnAsteroides(30, 900.0f);
-	Builder->SpawnEnergia(4);
-	Builder->SpawnEnemigos(8);
-}
-
-void ALevelDirector::ConstruirNivel8()
-{
-	if (!Builder) return;
-
-	Builder->SpawnAsteroides(36, 1050.0f);
-	Builder->SpawnEnergia(4);
-	Builder->SpawnEnemigos(10);
-}
-
-void ALevelDirector::ConstruirNivel9()
-{
-	if (!Builder) return;
-
-	Builder->SpawnAsteroides(42, 1200.0f);
-	Builder->SpawnEnergia(3);
-	Builder->SpawnEnemigos(12);
-}
-//NIVELES 10, 11, 12
-
-void ALevelDirector::ConstruirNivel10()
-{
-	if (!Builder) return;
-
-	Builder->SpawnAsteroides(50, 1350.0f);
-	Builder->SpawnEnergia(4);
-	Builder->SpawnEnemigos(14);
-}
-
-void ALevelDirector::ConstruirNivel11()
-{
-	if (!Builder) return;
-
-	Builder->SpawnAsteroides(60, 1500.0f);
-	Builder->SpawnEnergia(3);
-	Builder->SpawnEnemigos(18);
-}
-
-void ALevelDirector::ConstruirNivel12()
-{
-	if (!Builder) return;
-
-	Builder->SpawnAsteroides(70, 1700.0f);
-	Builder->SpawnEnergia(2);
-	Builder->SpawnEnemigos(20);
-
-	Builder->SpawnBossFinal(FVector(5000.0f, 0.0f, 500.0f));
-}
+// Repetimos la lógica de máxima dificultad para los niveles infinitos
+void ALevelDirector::ConstruirNivel4() { ConstruirNivel3(); }
+void ALevelDirector::ConstruirNivel5() { ConstruirNivel3(); }
+void ALevelDirector::ConstruirNivel6() { ConstruirNivel3(); }
+void ALevelDirector::ConstruirNivel7() { ConstruirNivel3(); }
+void ALevelDirector::ConstruirNivel8() { ConstruirNivel3(); }
+void ALevelDirector::ConstruirNivel9() { ConstruirNivel3(); }
+void ALevelDirector::ConstruirNivel10() { ConstruirNivel3(); }
+void ALevelDirector::ConstruirNivel11() { ConstruirNivel3(); }
+void ALevelDirector::ConstruirNivel12() { ConstruirNivel3(); }

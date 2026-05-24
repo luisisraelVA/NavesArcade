@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -17,7 +15,6 @@ class NAVESARCADE_API ANaveJugador : public APawn
 
 public:
 	ANaveJugador();
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Atributos")
 	float EnergiaActual;
 
@@ -36,12 +33,19 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Combate")
 	TSubclassOf<AProyectil> ClaseProyectil;
 
-	// Función puente nativa para evitar crash de inputs
 	void InicializarDisparo();
 
 	float IntegridadEstructural;
 	float VelocidadMovimiento;
 	float VelocidadRotacion;
+	int32 VidasActuales;
+
+	int32 PuntuacionTotal;
+	float MultiplicadorCombo;
+	float TiempoTemblorCamara;
+
+	// NUEVO: Contador de coleccionables para la misión
+	int32 NucleosRecolectados;
 
 	void RotarDerecha(float Valor);
 	void RotarArriba(float Valor);
@@ -53,6 +57,18 @@ public:
 
 	void RecibirDano(float CantidadDano);
 	void RecolectarEnergia(float Cantidad);
+	void ReiniciarNivel();
+	void Reaparecer();
+
+	void SumarPuntos(int32 PuntosBase);
+	int32 GetPuntuacion() const { return PuntuacionTotal; }
+	float GetCombo() const { return MultiplicadorCombo; }
+
+	float GetIntegridadEstructural() const { return IntegridadEstructural; }
+	int32 GetVidas() const { return VidasActuales; }
+
+	// NUEVO: Getters para que el HUD dibuje la misión
+	int32 GetNucleosRecolectados() const { return NucleosRecolectados; }
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes", meta = (AllowPrivateAccess = "true"))
@@ -60,10 +76,4 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes", meta = (AllowPrivateAccess = "true"))
 	UNaveFacade* FachadaNave;
-
-public:
-	FORCEINLINE UInventoryComponent* GetInventario() const { return Inventario; }
-
-	// Getter público para que la fachada extraiga la vida real
-	FORCEINLINE float GetIntegridadEstructural() const { return IntegridadEstructural; }
 };

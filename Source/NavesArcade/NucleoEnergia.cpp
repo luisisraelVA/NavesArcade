@@ -1,70 +1,75 @@
-
 #include "NucleoEnergia.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Kismet/GameplayStatics.h"
+#include "NaveAcechadora.h"
+#include "DronCentinela.h"
+#include "NaveNodriza.h"
 #include "NaveJugador.h"
-#include "NaveFacade.h"
 
 ANucleoEnergia::ANucleoEnergia()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	EsferaColision = CreateDefaultSubobject<USphereComponent>(TEXT("EsferaColision"));
 	RootComponent = EsferaColision;
-	EsferaColision->InitSphereRadius(80.0f);
-
-	// CORRECCIÓN FÍSICA: Aseguramos que responda tanto a bloqueos como a superposiciones
+	EsferaColision->InitSphereRadius(150.0f);
 	EsferaColision->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-	EsferaColision->SetGenerateOverlapEvents(true); // OBLIGATORIO: Fuerza a Unreal a escuchar el choque
+	EsferaColision->SetGenerateOverlapEvents(true);
 
 	MallaNucleo = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaNucleo"));
 	MallaNucleo->SetupAttachment(RootComponent);
-
-	// CORRECCIÓN DE MALLA: Nos aseguramos de que la estética del cristal no bloquee las físicas de la esfera
-	MallaNucleo->SetCollisionProfileName(TEXT("NoCollision"));
 	MallaNucleo->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	// C++ PURO: Cargamos una forma de pilar/cristal del motor para que parezca energía pura
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MallaCristal(TEXT("StaticMesh'/Game/StarterContent/Architecture/Pillar_50x500.Pillar_50x500'"));
-	if (MallaCristal.Succeeded())
-	{
-		MallaNucleo->SetStaticMesh(MallaCristal.Object);
-		MallaNucleo->SetRelativeScale3D(FVector(0.3f, 0.3f, 0.3f)); // Lo encogemos para que sea un ítem flotante
-	}
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
+	if (MeshAsset.Succeeded()) MallaNucleo->SetStaticMesh(MeshAsset.Object);
 
-	ValorEnergia = 20.0f;
+	MallaNucleo->SetRelativeScale3D(FVector(0.5f, 0.5f, 0.5f));
 }
 
 void ANucleoEnergia::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// Aseguramos el enlace dinámico nativo de manera estricta
-	if (EsferaColision)
-	{
-		EsferaColision->OnComponentBeginOverlap.AddDynamic(this, &ANucleoEnergia::AlSuperponerse);
-	}
+	EsferaColision->OnComponentBeginOverlap.AddDynamic(this, &ANucleoEnergia::AlSuperponerse);
 }
 
 void ANucleoEnergia::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	// Rotación vistosa
+	AddActorLocalRotation(FRotator(50.f * DeltaTime, 100.f * DeltaTime, 0.f));
 }
 
 void ANucleoEnergia::AlSuperponerse(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor != this)
+	ANaveJugador* Jugador = Cast<ANaveJugador>(OtherActor);
+	if (Jugador)
 	{
-		ANaveJugador* Nave = Cast<ANaveJugador>(OtherActor);
-		if (Nave)
+		// 1. Escaneamos si quedan naves enemigas en todo el nivel
+		TArray<AActor*> Acechadoras;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ANaveAcechadora::StaticClass(), Acechadoras);
+
+		TArray<AActor*> Drones;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADronCentinela::StaticClass(), Drones);
+
+		TArray<AActor*> Jefes;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ANaveNodriza::StaticClass(), Jefes);
+
+		int32 EnemigosVivos = Acechadoras.Num() + Drones.Num() + Jefes.Num();
+
+		// 2. Lógica de Bloqueo / Recolección
+		if (EnemigosVivos > 0)
 		{
-			UNaveFacade* Facade = Nave->FindComponentByClass<UNaveFacade>();
-			if (Facade)
-			{
-				Facade->ProcesarRecoleccionEnergia(ValorEnergia);
-				Destroy();
-			}
+			// Si hay enemigos, el escudo está activo. Le avisamos al jugador en pantalla roja.
+			if (GEngine) GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Red, TEXT("ACCESO DENEGADO: ELIMINA A LOS GUARDIANES PRIMERO"));
+		}
+		else
+		{
+			// Si limpió la zona, recolectamos
+			if (GEngine) GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Cyan, TEXT("NÚCLEO ASEGURADO"));
+			Jugador->RecolectarEnergia(1.0f);
+			Destroy();
 		}
 	}
 }

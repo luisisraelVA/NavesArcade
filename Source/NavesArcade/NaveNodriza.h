@@ -1,13 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "NaveNodriza.generated.h"
-
-class UStaticMeshComponent;
-class UPrimitiveComponent;
-class AProyectil;
 
 UCLASS()
 class NAVESARCADE_API ANaveNodriza : public APawn
@@ -16,45 +11,34 @@ class NAVESARCADE_API ANaveNodriza : public APawn
 
 public:
 	ANaveNodriza();
-
 	virtual void Tick(float DeltaTime) override;
 
-	void RecibirDanio(float Cantidad);
+	// Función expuesta para recibir los impactos del jugador
+	void RecibirDano(float Dano);
 
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere, Category = "Visual")
-	UStaticMeshComponent* MallaPrincipal;
+	UPROPERTY(VisibleAnywhere, Category = "Componentes")
+	class UStaticMeshComponent* MallaJefe;
 
-	UPROPERTY(VisibleAnywhere, Category = "Visual")
-	UStaticMeshComponent* AlaIzquierda;
+	class UParticleSystem* EfectoMuerteMasiva;
 
-	UPROPERTY(VisibleAnywhere, Category = "Visual")
-	UStaticMeshComponent* AlaDerecha;
+	float VidaActual;
+	float VidaMaxima;
+	bool bFaseDos;
+	bool bMuerto;
 
-	UPROPERTY(EditAnywhere, Category = "Combate")
-	float VidaJefe;
+	FTimerHandle TimerDisparoAbanico;
+	FTimerHandle TimerInvocacion;
+	FTimerHandle TimerHitFlash;
+	FTimerHandle TimerMuerteCinematica;
 
-	UPROPERTY(EditAnywhere, Category = "Combate")
-	float DanioColision;
+	// Habilidades del Jefe
+	void DispararAbanico();
+	void InvocarKamikaze();
 
-	UPROPERTY(EditAnywhere, Category = "Combate")
-	float VelocidadRotacion;
-
-	UPROPERTY(EditAnywhere, Category = "Combate")
-	float TiempoEntreAtaques;
-
-	float TiempoAtaqueActual;
-
-	UFUNCTION()
-	void AlChocar(
-		UPrimitiveComponent* HitComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		FVector NormalImpulse,
-		const FHitResult& Hit
-	);
-
-	void EjecutarAtaque();
+	// Game Feel
+	void RestaurarMaterial();
+	void FinalizarMuerteCinematica();
 };

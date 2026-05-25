@@ -5,7 +5,7 @@
 #include "NucleoEnergia.h"
 #include "NaveAcechadora.h"
 #include "DronCentinela.h"
-#include "PortalSalto.h" // NUEVO: Para poder rastrear el portal al activarse
+#include "PortalSalto.h" 
 #include "Kismet/GameplayStatics.h"
 
 ADodgerHUD::ADodgerHUD()
@@ -108,7 +108,11 @@ void ADodgerHUD::DrawHUD()
 
 					if (NucleoMasCercano)
 					{
-						FVector PosicionPantalla = Canvas->Project(NucleoMasCercano->GetActorLocation());
+						// NUEVO: Buscamos SOLO la malla 3D, ignorando esferas de colisión
+						UStaticMeshComponent* MallaCristal = NucleoMasCercano->FindComponentByClass<UStaticMeshComponent>();
+						FVector CentroVisual = MallaCristal ? MallaCristal->Bounds.Origin : NucleoMasCercano->GetActorLocation();
+
+						FVector PosicionPantalla = Canvas->Project(CentroVisual);
 						if (PosicionPantalla.Z > 0.0f)
 						{
 							float X = PosicionPantalla.X; float Y = PosicionPantalla.Y;
@@ -142,7 +146,11 @@ void ADodgerHUD::DrawHUD()
 
 					if (EnemigoMasCercano)
 					{
-						FVector PosicionPantallaEnemigo = Canvas->Project(EnemigoMasCercano->GetActorLocation());
+						// NUEVO: Buscamos SOLO la malla 3D, ignorando el radar gigante de 8000m
+						UStaticMeshComponent* MallaEnemigo = EnemigoMasCercano->FindComponentByClass<UStaticMeshComponent>();
+						FVector CentroVisual = MallaEnemigo ? MallaEnemigo->Bounds.Origin : EnemigoMasCercano->GetActorLocation();
+
+						FVector PosicionPantallaEnemigo = Canvas->Project(CentroVisual);
 						if (PosicionPantallaEnemigo.Z > 0.0f)
 						{
 							float X = PosicionPantallaEnemigo.X; float Y = PosicionPantallaEnemigo.Y;

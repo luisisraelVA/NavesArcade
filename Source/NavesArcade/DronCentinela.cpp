@@ -13,7 +13,12 @@ ADronCentinela::ADronCentinela()
 	RootComponent = MallaDron;
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> MallaCono(TEXT("StaticMesh'/Game/MisNaves/turret_single_turret.turret_single_turret'"));
-	if (MallaCono.Succeeded()) MallaDron->SetStaticMesh(MallaCono.Object);
+	if (MallaCono.Succeeded())
+	{
+		MallaDron->SetStaticMesh(MallaCono.Object);
+		// FORZAMOS LA ESCALA A 30 VECES SU TAMAÑO
+		MallaDron->SetRelativeScale3D(FVector(30.0f, 30.0f, 30.0f));
+	}
 
 	EsferaDeteccion = CreateDefaultSubobject<USphereComponent>(TEXT("EsferaDeteccion"));
 	EsferaDeteccion->SetupAttachment(RootComponent);
@@ -102,6 +107,9 @@ void ADronCentinela::EjecutarDisparoLaser()
 
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Instigator = Cast<APawn>(this);
+
+		// LA CORRECCIÓN: Evitamos que el dron se bloquee a sí mismo
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 		GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), PuntoDeAparicion, DireccionDisparo.Rotation(), SpawnParams);
 	}

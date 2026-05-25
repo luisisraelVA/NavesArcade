@@ -16,6 +16,8 @@ ANaveAcechadora::ANaveAcechadora()
 	if (MeshAsset.Succeeded())
 	{
 		MallaEnemigo->SetStaticMesh(MeshAsset.Object);
+		// FORZAMOS LA ESCALA
+		MallaEnemigo->SetRelativeScale3D(FVector(30.0f, 30.0f, 30.0f));
 	}
 
 	VelocidadPersecucion = 650.0f; // Más rápidas para ser un desafío real

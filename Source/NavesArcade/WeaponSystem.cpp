@@ -1,14 +1,16 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "WeaponSystem.h"
-#include "Proyectil.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
-#include "GameFramework/Pawn.h" // Cabecera necesaria para el Cast del Instigator
+#include "GameFramework/Pawn.h" 
+#include "NaveJugador.h"
+#include "AsteroideBase.h"
+#include "DronCentinela.h"
+#include "NaveAcechadora.h"
+#include "NaveNodriza.h"
 
 UWeaponSystem::UWeaponSystem()
 {
-	PrimaryComponentTick.bCanEverTick = false; // Eficiencia: No necesita ejecutarse cada frame
+	PrimaryComponentTick.bCanEverTick = false;
 	CadenciaDisparo = 0.3f; // Tiempo de enfriamiento entre ráfagas
 	bPuedeDisparar = true;
 }
@@ -16,12 +18,6 @@ UWeaponSystem::UWeaponSystem()
 void UWeaponSystem::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// C++ Puro: Si no se asigna en editor, forzamos la clase estática nativa
-	if (!ClaseProyectil)
-	{
-		ClaseProyectil = AProyectil::StaticClass();
-	}
 }
 
 void UWeaponSystem::Disparar(FVector Ubicacion, FRotator Rotacion)
@@ -34,6 +30,9 @@ void UWeaponSystem::Disparar(FVector Ubicacion, FRotator Rotacion)
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = GetOwner();
 		SpawnParams.Instigator = Cast<APawn>(GetOwner());
+
+		// CORRECCIÓN: Esta línea fuerza la aparición de la bala aunque roce la nave
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 		// Delegamos la creación del proyectil al motor
 		World->SpawnActor<AProyectil>(ClaseProyectil, Ubicacion, Rotacion, SpawnParams);

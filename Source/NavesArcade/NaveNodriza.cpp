@@ -69,6 +69,9 @@ void ANaveNodriza::DispararAbanico()
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Instigator = this;
 
+	// LA CORRECCIÓN: Forzamos la aparición de los 3 proyectiles masivos
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
 	for (float Angulo : Angulos)
 	{
 		FRotator RotacionFuego = Frente.Rotation();

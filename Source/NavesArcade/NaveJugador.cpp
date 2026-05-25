@@ -74,20 +74,10 @@ void ANaveJugador::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 void ANaveJugador::InicializarDisparo()
 {
-	// Verificamos que la clase del láser esté cargada correctamente
-	if (ClaseProyectil)
+	// Le pedimos a la Fachada que gestione el disparo, en lugar de hacerlo a la fuerza
+	if (FachadaNave)
 	{
-		// 1. Alejamos el punto de aparición a 300 unidades para librar el fuselaje de la nave
-		FVector PuntoSpawn = GetActorLocation() + (GetActorForwardVector() * 300.0f);
-
-		FActorSpawnParameters Parametros;
-		Parametros.Owner = this; // La nave es dueña del láser
-		Parametros.Instigator = this; // Confirmamos que el jugador es quien apretó el gatillo
-
-		// 2. ¡LA MAGIA!: Obligamos a Unreal a instanciar el láser ignorando las colisiones iniciales
-		Parametros.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-		GetWorld()->SpawnActor<AProyectil>(ClaseProyectil, PuntoSpawn, GetActorRotation(), Parametros);
+		FachadaNave->EjecutarDisparo();
 	}
 }
 

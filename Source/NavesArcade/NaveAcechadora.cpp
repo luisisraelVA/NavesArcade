@@ -12,7 +12,7 @@ ANaveAcechadora::ANaveAcechadora()
 	MallaEnemigo = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaEnemigo"));
 	RootComponent = MallaEnemigo;
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/Game/MisNaves/craft_racer.craft_racer'"));
 	if (MeshAsset.Succeeded())
 	{
 		MallaEnemigo->SetStaticMesh(MeshAsset.Object);

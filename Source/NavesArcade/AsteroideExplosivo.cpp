@@ -9,7 +9,7 @@ AAsteroideExplosivo::AAsteroideExplosivo()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// C++ PURO: Cambiamos la forma a un Cono grande para el Nivel 3
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MallaCono(TEXT("StaticMesh'/Engine/BasicShapes/Cone.Cone'"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> MallaCono(TEXT("StaticMesh'/Game/MisNaves/meteor_detailed.meteor_detailed'"));
 	if (MallaCono.Succeeded() && MallaAsteroide)
 	{
 		MallaAsteroide->SetStaticMesh(MallaCono.Object);

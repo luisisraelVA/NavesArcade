@@ -15,7 +15,7 @@ ANaveNodriza::ANaveNodriza()
 	RootComponent = MallaJefe;
 
 	// Usamos un cubo gigante como base visual del jefe
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/Game/MisNaves/craft_cargoA.craft_cargoA'"));
 	if (MeshAsset.Succeeded()) MallaJefe->SetStaticMesh(MeshAsset.Object);
 
 	static ConstructorHelpers::FObjectFinder<UParticleSystem> ParticulaAsset(TEXT("ParticleSystem'/Game/StarterContent/Particles/P_Explosion.P_Explosion'"));

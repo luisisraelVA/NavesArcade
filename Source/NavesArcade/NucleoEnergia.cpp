@@ -22,7 +22,7 @@ ANucleoEnergia::ANucleoEnergia()
 	MallaNucleo->SetupAttachment(RootComponent);
 	MallaNucleo->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/Game/MisNaves/rock_crystals.rock_crystals'"));
 	if (MeshAsset.Succeeded()) MallaNucleo->SetStaticMesh(MeshAsset.Object);
 
 	MallaNucleo->SetRelativeScale3D(FVector(0.5f, 0.5f, 0.5f));

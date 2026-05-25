@@ -24,7 +24,7 @@ APortalSalto::APortalSalto()
 	MallaPortal->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	// Usamos el cilindro básico nativo del motor que NUNCA falla al abrir Unreal
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MallaCilindroNativo(TEXT("StaticMesh'/Engine/BasicShapes/Cylinder.Cylinder'"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> MallaCilindroNativo(TEXT("StaticMesh'/Game/MisNaves/gate_complex.gate_complex'"));
 
 	if (MallaCilindroNativo.Succeeded())
 	{

@@ -24,7 +24,7 @@ AProyectil::AProyectil()
 	MallaProyectil = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaProyectil"));
 	MallaProyectil->SetupAttachment(RootComponent);
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/Game/MisNaves/pipe_straight.pipe_straight'"));
 	if (MeshAsset.Succeeded())
 	{
 		MallaProyectil->SetStaticMesh(MeshAsset.Object);

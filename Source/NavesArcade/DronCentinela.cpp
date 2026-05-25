@@ -12,7 +12,7 @@ ADronCentinela::ADronCentinela()
 	MallaDron = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaDron"));
 	RootComponent = MallaDron;
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MallaCono(TEXT("StaticMesh'/Engine/BasicShapes/Cone.Cone'"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> MallaCono(TEXT("StaticMesh'/Game/MisNaves/turret_single_turret.turret_single_turret'"));
 	if (MallaCono.Succeeded()) MallaDron->SetStaticMesh(MallaCono.Object);
 
 	EsferaDeteccion = CreateDefaultSubobject<USphereComponent>(TEXT("EsferaDeteccion"));

@@ -46,7 +46,7 @@ void ALevelBuilder::GenerarFaseObjetivo()
 	ILevelFab* InterfazNativa = Cast<ILevelFab>(FabricaDeFase.GetObject());
 
 	// Calculamos una ubicación a 15,000 unidades en frente de donde esté el jugador AHORA
-	FVector UbicacionBase = PlayerPawn->GetActorLocation() + (PlayerPawn->GetActorForwardVector() * 15000.0f);
+	FVector UbicacionBase = PlayerPawn->GetActorLocation() + (PlayerPawn->GetActorForwardVector() * 2000.0f);
 
 	// Desviamos un poco para que no esté perfectamente al centro siempre
 	UbicacionBase += FVector(0.0f, FMath::RandRange(-3000.0f, 3000.0f), FMath::RandRange(-2000.0f, 2000.0f));

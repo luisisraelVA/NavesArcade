@@ -62,27 +62,23 @@ void UNaveFacade::RecibirImpacto(float Dano)
 // CORRECCIÓN DEFINITIVA EN EL FLUJO DE DISPARO:
 void UNaveFacade::EjecutarDisparo()
 {
-	// Si por el orden de inicialización de Unreal NaveDuenia aún está vacío, lo asignamos aquí de golpe
+	// Aseguramos la referencia a la nave dueña
 	if (!NaveDuenia)
 	{
 		NaveDuenia = Cast<ANaveJugador>(GetOwner());
 	}
 
-	// 1. Verificamos que la Fachada conozca a la nave dueña y que el mundo exista
-	if (NaveDuenia && GetWorld())
+	// 1. Verificamos que todo exista, incluyendo el Sistema de Armas
+	if (NaveDuenia && SistemaArmas && GetWorld())
 	{
-		// 2. Calculamos la posición adelante (X + 150) para evitar que la colisión del proyectil choque con la nave al nacer
+		// 2. Calculamos la posición adelante (X + 150)
 		FVector SpawnLoc = NaveDuenia->GetActorLocation() + (NaveDuenia->GetActorForwardVector() * 150.0f);
 		FRotator SpawnRot = NaveDuenia->GetActorRotation();
 
-		FActorSpawnParameters ParametrosSpawn;
-		ParametrosSpawn.Owner = NaveDuenia;
-		ParametrosSpawn.Instigator = NaveDuenia->GetInstigator();
+		// 3. ¡LA CORRECCIÓN!: Usamos el Sistema de Armas para respetar la cadencia de tiro
+		SistemaArmas->Disparar(SpawnLoc, SpawnRot);
 
-		// 3. Spawneamos el proyectil directamente en el mundo usando código puro en tiempo de ejecución
-		GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), SpawnLoc, SpawnRot, ParametrosSpawn);
-
-		// 4. Reproducimos el sonido del disparo que programó tu grupo
+		// 4. Reproducimos el sonido del disparo
 		if (AudioManager)
 		{
 			AudioManager->PlaySoundDisparo();

@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -9,11 +7,11 @@
 UCLASS()
 class NAVESARCADE_API AAsteroideExplosivo : public AAsteroideDinamico
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	AAsteroideExplosivo();
+    AAsteroideExplosivo();
 
 protected:
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
 };

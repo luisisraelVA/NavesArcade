@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,32 +5,41 @@
 #include "LevelBuilder.h"
 #include "LevelDirector.generated.h"
 
+// Enumeración de dificultad
+UENUM(BlueprintType)
+enum class EDificultad : uint8
+{
+    Facil      UMETA(DisplayName = "Fácil"),
+    Medio      UMETA(DisplayName = "Medio"),
+    Dificil    UMETA(DisplayName = "Difícil")
+};
+
 UCLASS()
 class NAVESARCADE_API ALevelDirector : public AActor
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	ALevelDirector();
+    ALevelDirector();
 
-	void SetBuilder(ALevelBuilder* NuevoBuilder);
+    void SetBuilder(ALevelBuilder* NuevoBuilder);
+    void SetDificultad(EDificultad NuevaDificultad);
 
-	void ConstruirNivel1();
-	void ConstruirNivel2();
-	void ConstruirNivel3();
+    void ConstruirNivel1();
+    void ConstruirNivel2();
+    void ConstruirNivel3();
+    void ConstruirNivel4();
+    void ConstruirNivel5();
+    void ConstruirNivel6();
 
-	void ConstruirNivel4();
-	void ConstruirNivel5();
-	void ConstruirNivel6();
-
-	void ConstruirNivel7();
-	void ConstruirNivel8();
-	void ConstruirNivel9();
-
-	void ConstruirNivel10();
-	void ConstruirNivel11();
-	void ConstruirNivel12();
+    void ConstruirNivel7();
+    void ConstruirNivel8();
+    void ConstruirNivel9();
+    void ConstruirNivel10();
+    void ConstruirNivel11();
+    void ConstruirNivel12();
 
 private:
-	ALevelBuilder* Builder;
+    ALevelBuilder* Builder;
+    EDificultad Dificultad;
 };

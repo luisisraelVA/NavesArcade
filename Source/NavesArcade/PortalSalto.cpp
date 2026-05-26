@@ -1,91 +1,58 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "PortalSalto.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
-#include "NaveJugador.h" 
-#include "NaveFacade.h" // Incluimos el Facade para manejar la energía limpiamente
+#include "NaveJugador.h"
 #include "NavesArcadeGameMode.h"
 #include "Kismet/GameplayStatics.h"
 
 APortalSalto::APortalSalto()
 {
-	PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = false;
 
-	// Componente de colisión por esfera
-	EsferaColision = CreateDefaultSubobject<USphereComponent>(TEXT("EsferaColision"));
-	RootComponent = EsferaColision;
-	EsferaColision->InitSphereRadius(400.0f);
-	EsferaColision->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+    EsferaColision = CreateDefaultSubobject<USphereComponent>(TEXT("EsferaColision"));
+    RootComponent = EsferaColision;
+    EsferaColision->InitSphereRadius(1000.0f);
+    EsferaColision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+    EsferaColision->SetGenerateOverlapEvents(true);
 
-	MallaPortal = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaPortal"));
-	MallaPortal->SetupAttachment(RootComponent);
-	MallaPortal->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    MallaPortal = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaPortal"));
+    MallaPortal->SetupAttachment(RootComponent);
+    MallaPortal->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	// Usamos el cilindro básico nativo del motor que NUNCA falla al abrir Unreal
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MallaCilindroNativo(TEXT("StaticMesh'/Game/MisNaves/gate_complex.gate_complex'"));
-
-	if (MallaCilindroNativo.Succeeded())
-	{
-		MallaPortal->SetStaticMesh(MallaCilindroNativo.Object);
-
-		// Lo aplanamos y ensanchamos por código para que parezca un anillo o compuerta estelar
-		MallaPortal->SetRelativeScale3D(FVector(6.0f, 6.0f, 0.1f));
-	}
-
-	EnergiaRequerida = 20.0f;
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
+    if (CubeMesh.Succeeded())
+    {
+        MallaPortal->SetStaticMesh(CubeMesh.Object);
+        MallaPortal->SetRelativeScale3D(FVector(10.0f, 10.0f, 2.0f));
+    }
 }
 
 void APortalSalto::BeginPlay()
 {
-	Super::BeginPlay();
-
-	if (EsferaColision)
-	{
-		EsferaColision->OnComponentBeginOverlap.AddDynamic(this, &APortalSalto::AlSuperponerse);
-	}
+    Super::BeginPlay();
+    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Magenta, TEXT("PORTAL CREADO"));
 }
 
-void APortalSalto::Tick(float DeltaTime)
+void APortalSalto::Tick(float DeltaTime) { Super::Tick(DeltaTime); }
+
+void APortalSalto::NotifyActorBeginOverlap(AActor* OtherActor)
 {
-	Super::Tick(DeltaTime);
-}
+    Super::NotifyActorBeginOverlap(OtherActor);
+    ANaveJugador* Nave = Cast<ANaveJugador>(OtherActor);
+    if (!Nave) return;
+    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("¡NAVE TOCÓ PORTAL!"));
 
-void APortalSalto::AlSuperponerse(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (OtherActor && OtherActor != this)
-	{
-		// 1. Verificamos si el objeto que entró al portal es la nave del jugador
-		ANaveJugador* NaveChocada = Cast<ANaveJugador>(OtherActor);
-		if (NaveChocada)
-		{
-			// 2. CORRECCIÓN DEFINITIVA: Le pedimos al Facade de la nave que valide la energía por nosotros
-			UNaveFacade* Facade = NaveChocada->FindComponentByClass<UNaveFacade>();
-
-			if (Facade && Facade->PuedeSaltarDeNivel())
-			{
-				if (GEngine)
-				{
-					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, TEXT("¡PORTAL ACTIVADO! Saltando de nivel físico..."));
-				}
-
-				// 3. Obtenemos el GameMode de C++ que maneja el OpenLevel
-				ANavesArcadeGameMode* GameMode = Cast<ANavesArcadeGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-				if (GameMode)
-				{
-					// 4. Le ordenamos abrir el siguiente mapa (Nivel-02 o Nivel-03)
-					GameMode->AvanzarSiguienteNivel();
-				}
-			}
-			else
-			{
-				// Mensaje de advertencia si la nave no tiene suficiente combustible de cristales
-				if (GEngine)
-				{
-					GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Yellow, TEXT("Energía insuficiente. Requiere 60 puntos."));
-				}
-			}
-		}
-	}
+    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
+    int32 Requeridos = GM ? GM->GetNucleosRequeridos() : 3;
+    int32 Nucleos = Nave->GetNucleosRecolectados();
+    if (Nucleos >= Requeridos)
+    {
+        if (GM) GM->AvanzarSiguienteNivel();
+        else UGameplayStatics::OpenLevel(GetWorld(), "Nivel-01");
+    }
+    else
+    {
+        if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("Núcleos: %d/%d"), Nucleos, Requeridos));
+    }
 }

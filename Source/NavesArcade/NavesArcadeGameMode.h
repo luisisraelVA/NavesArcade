@@ -1,7 +1,5 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -15,37 +13,41 @@
 UCLASS(MinimalAPI)
 class ANavesArcadeGameMode : public AGameModeBase
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	ANavesArcadeGameMode();
+    ANavesArcadeGameMode();
 
-	// Función para avanzar de nivel (la llamará el portal de salto)
-	void AvanzarSiguienteNivel();
+    void AvanzarSiguienteNivel();
+
+    // Dificultad global (Fácil, Medio, Difícil)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dificultad")
+    EDificultad DificultadActual = EDificultad::Medio;
+
+    // Nivel actual (1..6)
+    int32 GetNivelActual() const { return NivelActual; }
+    int32 GetNucleosRequeridos() const { return NucleosRequeridos; }
+    void ActualizarRequerimientoPorNivel();
 
 protected:
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
 
 private:
-	// Punteros para guardar tus patrones de diseño en memoria
-	UPROPERTY()
-	ALevelBuilder* InstanciaBuilder;
+    UPROPERTY()
+    ALevelBuilder* InstanciaBuilder;
 
-	UPROPERTY()
-	ALevelDirector* InstanciaDirector;
+    UPROPERTY()
+    ALevelDirector* InstanciaDirector;
 
-	UPROPERTY()
-	UFaseUnoFab* FabricaFaseUno;
+    UPROPERTY()
+    UFaseUnoFab* FabricaFaseUno;
 
-	UPROPERTY()
-	UFaseFinalFab* FabricaFaseFinal;
+    UPROPERTY()
+    UFaseFinalFab* FabricaFaseFinal;
 
-	// Variable para saber en qué nivel vamos
-	int32 NivelActual;
+    int32 NivelActual;
+    int32 NucleosRequeridos;
 
-	// Función interna para cargar la receta exacta del director
-	void CargarRecetaNivel(int32 NumeroNivel);
-
-	// Función para limpiar los asteroides viejos antes de armar el nuevo nivel
-	void LimpiarMapa();
+    void CargarRecetaNivel(int32 NumeroNivel);
+    void LimpiarMapa();
 };

@@ -8,32 +8,33 @@
 UCLASS()
 class NAVESARCADE_API ALevelBuilder : public AActor
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	ALevelBuilder();
-	virtual void BeginPlay() override;
+    ALevelBuilder();
+    virtual void BeginPlay() override;
 
-	void SetFabrica(TScriptInterface<ILevelFab> NuevaFabrica);
-	void SetClaseAsteroide(TSubclassOf<class AAsteroideBase> NuevaClase);
-
-	void SpawnAsteroides(int32 Cantidad, float VelocidadAsteroide);
-
-	// NUEVO: Función que instanciará una base a la vez
-	void GenerarFaseObjetivo();
+    void SetFabrica(TScriptInterface<ILevelFab> NuevaFabrica);
+    void SetClaseAsteroide(TSubclassOf<class AAsteroideBase> NuevaClase);
+    void SpawnAsteroides(int32 Cantidad, float VelocidadAsteroide);
+    void GenerarFaseObjetivo();
+    void NotificarMuerteEnemigo();
 
 protected:
-	UFUNCTION()
-	void GeneracionContinua();
+    UFUNCTION()
+    void GeneracionContinua();
 
 private:
-	TScriptInterface<ILevelFab> FabricaDeFase;
-	TSubclassOf<class AAsteroideBase> ClaseAsteroide;
-	TSubclassOf<class ANucleoEnergia> ClaseEnergia;
+    void SpawnNucleo();
 
-	FTimerHandle TimerMundoAbierto;
+    TScriptInterface<ILevelFab> FabricaDeFase;
+    TSubclassOf<class AAsteroideBase> ClaseAsteroide;
+    TSubclassOf<class ANucleoEnergia> ClaseEnergia;
 
-	int32 DensidadAsteroides;
-	float VelocidadGlobal;
-	int32 FaseActualMision; // Guarda en qué núcleo vamos
+    FTimerHandle TimerMundoAbierto;
+
+    int32 DensidadAsteroides;
+    float VelocidadGlobal;
+    int32 FaseActualMision;
+    int32 EnemigosVivosEnSector;
 };

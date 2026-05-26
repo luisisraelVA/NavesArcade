@@ -7,16 +7,14 @@
 UINTERFACE(MinimalAPI)
 class ULevelFab : public UInterface
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 };
 
 class NAVESARCADE_API ILevelFab
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	// FIX: Se agregó 'class' antes de UWorld para hacer un Forward Declaration.
-	virtual class AActor* CrearEnemigo(class UWorld* World, FVector Location) = 0;
-
-	virtual float ObtenerVelocidadAmbiente() = 0;
+    virtual class AActor* CrearEnemigo(class UWorld* World, FVector Location) = 0;
+    virtual float ObtenerVelocidadAmbiente() = 0;
 };

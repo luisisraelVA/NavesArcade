@@ -8,11 +8,9 @@
 UCLASS()
 class NAVESARCADE_API UFaseFinalFab : public UObject, public ILevelFab
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	// FIX: Agregado 'class' a UWorld para empatar con la interfaz.
-	virtual class AActor* CrearEnemigo(class UWorld* World, FVector Location) override;
-
-	virtual float ObtenerVelocidadAmbiente() override { return 1500.0f; }
+    virtual class AActor* CrearEnemigo(class UWorld* World, FVector Location) override;
+    virtual float ObtenerVelocidadAmbiente() override { return 1500.0f; }
 };

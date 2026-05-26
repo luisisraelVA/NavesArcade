@@ -1,6 +1,5 @@
-#include "WeaponSystem.h"
+ï»¿#include "WeaponSystem.h"
 #include "Engine/World.h"
-#include "TimerManager.h"
 #include "GameFramework/Pawn.h" 
 #include "NaveJugador.h"
 #include "AsteroideBase.h"
@@ -10,40 +9,38 @@
 
 UWeaponSystem::UWeaponSystem()
 {
-	PrimaryComponentTick.bCanEverTick = false;
-	CadenciaDisparo = 0.3f; // Tiempo de enfriamiento entre ráfagas
-	bPuedeDisparar = true;
+    PrimaryComponentTick.bCanEverTick = false;
+    CadenciaDisparo = 0.3f;
+    bPuedeDisparar = true;
+    UltimoTiempoDisparo = 0.0f;
 }
 
 void UWeaponSystem::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 }
 
 void UWeaponSystem::Disparar(FVector Ubicacion, FRotator Rotacion)
 {
-	if (!bPuedeDisparar || !ClaseProyectil) return;
+    if (!ClaseProyectil) return;
 
-	UWorld* World = GetWorld();
-	if (World)
-	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = GetOwner();
-		SpawnParams.Instigator = Cast<APawn>(GetOwner());
+    UWorld* World = GetWorld();
+    if (World)
+    {
+        float TiempoActual = World->GetTimeSeconds();
+        if (TiempoActual < UltimoTiempoDisparo) UltimoTiempoDisparo = 0.0f;
+        if (TiempoActual - UltimoTiempoDisparo < CadenciaDisparo) return;
+        UltimoTiempoDisparo = TiempoActual;
 
-		// CORRECCIÓN: Esta línea fuerza la aparición de la bala aunque roce la nave
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.Owner = GetOwner();
+        SpawnParams.Instigator = Cast<APawn>(GetOwner());
+        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-		// Delegamos la creación del proyectil al motor
-		World->SpawnActor<AProyectil>(ClaseProyectil, Ubicacion, Rotacion, SpawnParams);
-
-		// Sistema de enfriamiento (Cooldown)
-		bPuedeDisparar = false;
-		World->GetTimerManager().SetTimer(TimerHandle_Cadencia, this, &UWeaponSystem::ResetearDisparo, CadenciaDisparo, false);
-	}
+        World->SpawnActor<AProyectil>(ClaseProyectil, Ubicacion, Rotacion, SpawnParams);
+    }
 }
 
 void UWeaponSystem::ResetearDisparo()
 {
-	bPuedeDisparar = true;
 }

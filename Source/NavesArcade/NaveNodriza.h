@@ -7,38 +7,35 @@
 UCLASS()
 class NAVESARCADE_API ANaveNodriza : public APawn
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	ANaveNodriza();
-	virtual void Tick(float DeltaTime) override;
-
-	// Función expuesta para recibir los impactos del jugador
-	void RecibirDano(float Dano);
+    ANaveNodriza();
+    virtual void Tick(float DeltaTime) override;
+    void RecibirDano(float Dano);
 
 protected:
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
+    virtual void Destroyed() override;
 
-	UPROPERTY(VisibleAnywhere, Category = "Componentes")
-	class UStaticMeshComponent* MallaJefe;
+    UPROPERTY(VisibleAnywhere, Category = "Componentes")
+    class UStaticMeshComponent* MallaJefe;
 
-	class UParticleSystem* EfectoMuerteMasiva;
+    class UParticleSystem* EfectoMuerteMasiva;
 
-	float VidaActual;
-	float VidaMaxima;
-	bool bFaseDos;
-	bool bMuerto;
+    float VidaActual;
+    float VidaMaxima;
+    bool bFaseDos;
+    bool bMuerto;
 
-	FTimerHandle TimerDisparoAbanico;
-	FTimerHandle TimerInvocacion;
-	FTimerHandle TimerHitFlash;
-	FTimerHandle TimerMuerteCinematica;
+    FTimerHandle TimerDisparoAbanico;
+    FTimerHandle TimerInvocacion;
+    FTimerHandle TimerHitFlash;
+    FTimerHandle TimerMuerteCinematica;
 
-	// Habilidades del Jefe
-	void DispararAbanico();
-	void InvocarKamikaze();
-
-	// Game Feel
-	void RestaurarMaterial();
-	void FinalizarMuerteCinematica();
+    void DispararAbanico();
+    void InvocarKamikaze();
+    void RestaurarMaterial();
+    UFUNCTION()
+    void FinalizarMuerteCinematica();
 };

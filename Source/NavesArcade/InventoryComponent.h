@@ -1,38 +1,31 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "InventoryComponent.generated.h"
 
-
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class NAVESARCADE_API UInventoryComponent : public UActorComponent
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
-	public:
-		UInventoryComponent();
+public:
+    UInventoryComponent();
 
-	protected:
-		virtual void BeginPlay() override;
+    void AgregarEnergia(float Cantidad);
+    bool TieneEnergiaSuficiente() const;
+    float GetEnergiaActual() const { return EnergiaActual; }
 
-		// Variable protegida que almacena la energía (POO: Encapsulamiento)
-		UPROPERTY(EditAnywhere, Category = "Recursos")
-		float EnergiaActual;
+    void SetRequerimientoNivel(int32 NuevoRequerimiento);
+    int32 GetRequerimientoNivel() const { return EnergiaRequeridaNivel; }
 
-		UPROPERTY(EditAnywhere, Category = "Recursos")
-		float EnergiaRequeridaNivel;
+protected:
+    virtual void BeginPlay() override;
 
-	public:
-		// Método llamado por el NucleoEnergia para sumar recursos
-		void AgregarEnergia(float Cantidad);
+private:
+    UPROPERTY(EditAnywhere, Category = "Recursos")
+    float EnergiaActual;
 
-		// Función de consulta (POO: Abstracción)
-		UFUNCTION(BlueprintPure, Category = "Inventario")
-		bool TieneEnergiaSuficiente() const;
-
-		// Getter para obtener la energía actual
-		float GetEnergiaActual() const { return EnergiaActual; }
-	};
+    UPROPERTY(EditAnywhere, Category = "Recursos")
+    int32 EnergiaRequeridaNivel;  // cambia a int32
+};

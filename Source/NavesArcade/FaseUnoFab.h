@@ -8,11 +8,9 @@
 UCLASS()
 class NAVESARCADE_API UFaseUnoFab : public UObject, public ILevelFab
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	// FIX: Mismo arreglo. Sin 'class', el compilador no reconoce la firma de la función.
-	virtual class AActor* CrearEnemigo(class UWorld* World, FVector Location) override;
-
-	virtual float ObtenerVelocidadAmbiente() override { return 400.0f; }
+    virtual class AActor* CrearEnemigo(class UWorld* World, FVector Location) override;
+    virtual float ObtenerVelocidadAmbiente() override { return 400.0f; }
 };

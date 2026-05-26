@@ -2,71 +2,81 @@
 #include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Components/StaticMeshComponent.h"
-#include "EnemyController.h" 
-#include "NaveJugador.h" 
+#include "EnemyController.h"
+#include "NaveJugador.h"
+#include "LevelBuilder.h"
 
 ANaveAcechadora::ANaveAcechadora()
 {
-	PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = true;
 
-	MallaEnemigo = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaEnemigo"));
-	RootComponent = MallaEnemigo;
+    MallaEnemigo = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaEnemigo"));
+    RootComponent = MallaEnemigo;
+    MallaEnemigo->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+    MallaEnemigo->SetGenerateOverlapEvents(true);
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/Game/MisNaves/craft_racer.craft_racer'"));
-	if (MeshAsset.Succeeded())
-	{
-		MallaEnemigo->SetStaticMesh(MeshAsset.Object);
-		// FORZAMOS LA ESCALA
-		MallaEnemigo->SetRelativeScale3D(FVector(30.0f, 30.0f, 30.0f));
-	}
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> ConoMesh(TEXT("StaticMesh'/Engine/BasicShapes/Cone.Cone'"));
+    if (ConoMesh.Succeeded())
+    {
+        MallaEnemigo->SetStaticMesh(ConoMesh.Object);
+        MallaEnemigo->SetRelativeScale3D(FVector(1.2f, 1.2f, 1.2f));
+    }
+    else
+    {
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(TEXT("StaticMesh'/Engine/BasicShapes/Cylinder.Cylinder'"));
+        if (CylinderMesh.Succeeded()) MallaEnemigo->SetStaticMesh(CylinderMesh.Object);
+    }
 
-	VelocidadPersecucion = 650.0f; // Más rápidas para ser un desafío real
-
-	AIControllerClass = AEnemyController::StaticClass();
-	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+    VelocidadPersecucion = 350.0f;
+    AIControllerClass = AEnemyController::StaticClass();
+    AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+    Tags.Add(FName("Enemy"));
 }
 
 void ANaveAcechadora::BeginPlay()
 {
-	Super::BeginPlay();
-	TargetJugador = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+    Super::BeginPlay();
+    TargetJugador = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 }
 
 void ANaveAcechadora::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
+    if (!TargetJugador) TargetJugador = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+    if (TargetJugador)
+    {
+        float Distancia = FVector::Dist(GetActorLocation(), TargetJugador->GetActorLocation());
+        if (Distancia > 800.0f)
+        {
+            FVector Direccion = (TargetJugador->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+            FRotator RotacionObjetivo = Direccion.Rotation();
+            SetActorRotation(FMath::RInterpTo(GetActorRotation(), RotacionObjetivo, DeltaTime, 4.0f));
+            AddActorWorldOffset(GetActorForwardVector() * VelocidadPersecucion * DeltaTime);
+        }
+        else
+        {
+            AddActorWorldOffset(GetActorForwardVector() * (VelocidadPersecucion * 1.2f) * DeltaTime);
+        }
+        AddActorWorldOffset(FVector(0.0f, 0.0f, FMath::Sin(GetWorld()->GetTimeSeconds() * 8.0f) * 60.0f * DeltaTime));
 
-	// CORRECCIÓN DE IA: Si el jugador reapareció o no se encontró al inicio, lo volvemos a buscar
-	if (!TargetJugador)
-	{
-		TargetJugador = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	}
+        if (Distancia < 600.0f)
+        {
+            ANaveJugador* Jugador = Cast<ANaveJugador>(TargetJugador);
+            if (Jugador)
+            {
+                Jugador->RecibirDano(25.0f);
+                Destroy();
+            }
+        }
+    }
+}
 
-	if (TargetJugador)
-	{
-		// Rotación hacia el jugador
-		FVector DireccionHaciaJugador = (TargetJugador->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-		FRotator RotacionDestino = DireccionHaciaJugador.Rotation();
-		FRotator RotacionSuave = FMath::RInterpTo(GetActorRotation(), RotacionDestino, DeltaTime, 4.0f);
-		SetActorRotation(RotacionSuave);
-
-		// Avanzar
-		AddActorWorldOffset(GetActorForwardVector() * VelocidadPersecucion * DeltaTime, true);
-
-		// Efecto Levitación
-		float EfectoHover = FMath::Sin(GetWorld()->GetTimeSeconds() * 5.0f) * 150.0f * DeltaTime;
-		AddActorWorldOffset(FVector(0.0f, 0.0f, EfectoHover), true);
-
-		// Ataque Kamikaze
-		float Distancia = FVector::Dist(GetActorLocation(), TargetJugador->GetActorLocation());
-		if (Distancia < 350.0f) // Distancia justa para no fallar el choque
-		{
-			ANaveJugador* Jugador = Cast<ANaveJugador>(TargetJugador);
-			if (Jugador)
-			{
-				Jugador->RecibirDano(25.0f);
-				Destroy(); // Se sacrifica para hacerte daño
-			}
-		}
-	}
+void ANaveAcechadora::Destroyed()
+{
+    ALevelBuilder* Builder = Cast<ALevelBuilder>(UGameplayStatics::GetActorOfClass(GetWorld(), ALevelBuilder::StaticClass()));
+    if (Builder)
+    {
+        Builder->NotificarMuerteEnemigo();
+    }
+    Super::Destroyed();
 }

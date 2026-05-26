@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -9,22 +7,21 @@
 UCLASS()
 class NAVESARCADE_API AAsteroideErratico : public AAsteroideDinamico
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	AAsteroideErratico();
+    AAsteroideErratico();
 
-	virtual void Tick(float DeltaTime) override;
+    virtual void Tick(float DeltaTime) override;
 
 protected:
-	// Aseguramos la declaración de BeginPlay
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere, Category = "Movimiento Erratico")
-	float FrecuenciaOndulacion;
+    UPROPERTY(EditAnywhere, Category = "Movimiento Erratico")
+    float FrecuenciaOndulacion;
 
-	UPROPERTY(EditAnywhere, Category = "Movimiento Erratico")
-	float AmplitudOndulacion;
+    UPROPERTY(EditAnywhere, Category = "Movimiento Erratico")
+    float AmplitudOndulacion;
 
-	float TiempoAcumulado;
+    float TiempoAcumulado;
 };

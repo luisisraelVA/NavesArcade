@@ -5,6 +5,9 @@
 #include "LevelFab.h"
 #include "LevelBuilder.generated.h"
 
+// --- PATRÓN OBSERVER: Declaración del Delegado Multicast ---
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnNucleoRecolectadoSignature);
+
 UCLASS()
 class NAVESARCADE_API ALevelBuilder : public AActor
 {
@@ -19,6 +22,10 @@ public:
     void SpawnAsteroides(int32 Cantidad, float VelocidadAsteroide);
     void GenerarFaseObjetivo();
     void NotificarMuerteEnemigo();
+
+    // --- PATRÓN OBSERVER: Instancia del evento para que los observadores se suscriban ---
+    UPROPERTY(BlueprintAssignable, Category = "Eventos Avanzados")
+    FOnNucleoRecolectadoSignature OnNucleoRecolectado;
 
 protected:
     UFUNCTION()

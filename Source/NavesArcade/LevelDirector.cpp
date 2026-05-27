@@ -78,9 +78,40 @@ void ALevelDirector::ConstruirNivel6()
 }
 
 // Del nivel 7 al 12 (no usados) repiten nivel 3
-void ALevelDirector::ConstruirNivel7() { ConstruirNivel3(); }
-void ALevelDirector::ConstruirNivel8() { ConstruirNivel3(); }
-void ALevelDirector::ConstruirNivel9() { ConstruirNivel3(); }
+void ALevelDirector::ConstruirNivel7()
+{
+    if (!Builder) return;
+    // Nivel 7: Enjambre denso. Muchos asteroides a velocidad muy alta
+    Builder->SpawnAsteroides(340, 2000.0f);
+}
+
+void ALevelDirector::ConstruirNivel8()
+{
+    if (!Builder) return;
+    // Nivel 8: Velocidad extrema, requiere reflejos perfectos
+    Builder->SpawnAsteroides(380, 2200.0f);
+}
+
+void ALevelDirector::ConstruirNivel9()
+{
+    if (!Builder) return;
+    // Tormenta extrema de asteroides
+
+    Builder->SpawnAsteroides(550, 2800.0f);
+
+    // Refuerzo extra para saturar el mapa
+    Builder->SpawnAsteroides(120, 3200.0f);
+
+    if (GEngine)
+    {
+        GEngine->AddOnScreenDebugMessage(
+            -1,
+            6.f,
+            FColor::Red,
+            TEXT("? NIVEL 9: EL CORAZON DEL ABISMO ?")
+        );
+    }
+}
 void ALevelDirector::ConstruirNivel10() { ConstruirNivel3(); }
 void ALevelDirector::ConstruirNivel11() { ConstruirNivel3(); }
 void ALevelDirector::ConstruirNivel12() { ConstruirNivel3(); }

@@ -23,8 +23,9 @@ void ADodgerHUD::DrawHUD()
     APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
     ANaveJugador* MiNave = Cast<ANaveJugador>(PlayerPawn);
     APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
 
-    if (!MiNave || !Canvas || !FuentePrincipal || !PC) return;
+    if (!MiNave || !Canvas || !FuentePrincipal || !PC || !GM) return;
 
     UNaveFacade* Facade = MiNave->FindComponentByClass<UNaveFacade>();
     if (!Facade) return;
@@ -54,8 +55,6 @@ void ADodgerHUD::DrawHUD()
         DrawText(FString::Printf(TEXT("VIDAS: %d"), VidasRestantes), FLinearColor::White, 40.f, 30.f, FuentePrincipal, 1.2f);
         DrawText(FString::Printf(TEXT("NIVEL: %d"), NivelActual), FLinearColor::White, 40.f, 55.f, FuentePrincipal, 1.2f);
 
-        // Obtener núcleos requeridos del GameMode
-        ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
         int32 NucleosReq = GM ? GM->GetNucleosRequeridos() : 3;
         DrawText(FString::Printf(TEXT("NUCLEOS: %d / %d"), Recolectados, NucleosReq), FLinearColor(0.0f, 1.0f, 1.0f), 40.f, 80.f, FuentePrincipal, 1.2f);
 
@@ -117,21 +116,13 @@ void ADodgerHUD::DrawHUD()
             }
         }
 
-        // --- ENEMIGOS (por tag "Enemy") ---
-        TArray<AActor*> TodosLosActores;
-        UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), TodosLosActores);
-        TArray<AActor*> Enemigos;
-        for (AActor* Actor : TodosLosActores)
-        {
-            if (Actor && Actor->ActorHasTag(FName("Enemy")) && Actor != PlayerPawn)
-                Enemigos.Add(Actor);
-        }
-        DrawText(FString::Printf(TEXT("ENEMIGOS: %d"), Enemigos.Num()), FLinearColor::Yellow, 40.f, 190.f, FuentePrincipal, 1.2f);
+        // --- OPTIMIZADO: LEER ENEMIGOS DIRECTOS DEL GAMEMODE ---
+        DrawText(FString::Printf(TEXT("ENEMIGOS: %d"), GM->EnemigosActivos.Num()), FLinearColor::Yellow, 40.f, 190.f, FuentePrincipal, 1.2f);
 
-        int32 EnemyIndex = 1;
-        for (AActor* Enemigo : Enemigos)
+        for (AActor* Enemigo : GM->EnemigosActivos)
         {
-            if (!Enemigo) continue;
+            if (!IsValid(Enemigo)) continue;
+
             float Distancia = FVector::Dist(MiNave->GetActorLocation(), Enemigo->GetActorLocation());
             FVector2D PosPantalla;
             bool bProyectado = PC->ProjectWorldLocationToScreen(Enemigo->GetActorLocation(), PosPantalla);
@@ -146,19 +137,18 @@ void ADodgerHUD::DrawHUD()
                 X = AnchoPantalla / 2.0f;
                 Y = AltoPantalla / 2.0f;
             }
-            // Cuadrado rojo
+
             DrawLine(X - 15, Y - 15, X + 15, Y - 15, FLinearColor::Red, 2.5f);
             DrawLine(X - 15, Y + 15, X + 15, Y + 15, FLinearColor::Red, 2.5f);
             DrawLine(X - 15, Y - 15, X - 15, Y + 15, FLinearColor::Red, 2.5f);
             DrawLine(X + 15, Y - 15, X + 15, Y + 15, FLinearColor::Red, 2.5f);
-            // Etiqueta
+
             FString NombreClase = Enemigo->GetClass()->GetName();
             NombreClase.RemoveFromEnd("_C");
             DrawText(NombreClase, FLinearColor::Red, X - 35.0f, Y - 35.0f, FuentePrincipal, 0.8f);
-            // Distancia
+
             FString DistText = FString::Printf(TEXT("%.0fm"), Distancia / 100.0f);
             DrawText(DistText, FLinearColor::Red, X - 20.0f, Y + 20.0f, FuentePrincipal, 0.8f);
-            EnemyIndex++;
         }
     }
     else if (VidaReal <= 0.0f && VidasRestantes > 0)

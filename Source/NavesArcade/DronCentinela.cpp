@@ -8,6 +8,7 @@
 #include "LevelBuilder.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/Engine.h"
+#include "NavesArcadeGameMode.h"
 #include "Kismet/KismetMathLibrary.h"
 
 ADronCentinela::ADronCentinela()
@@ -49,27 +50,52 @@ ADronCentinela::ADronCentinela()
 void ADronCentinela::BeginPlay()
 {
     Super::BeginPlay();
+
     ObjetivoActual = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+
     if (ObjetivoActual)
     {
-        GetWorldTimerManager().SetTimer(TimerCicloDisparo, this, &ADronCentinela::EjecutarDisparoLaser, 3.0f, true, 1.0f);
+        GetWorldTimerManager().SetTimer(
+            TimerCicloDisparo,
+            this,
+            &ADronCentinela::EjecutarDisparoLaser,
+            3.0f,
+            true,
+            1.0f
+        );
+    }
+
+    // Registrar enemigo en el GameMode
+    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
+
+    if (GM)
+    {
+        GM->RegistrarEnemigo(this);
     }
 }
 
 void ADronCentinela::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-    if (!ObjetivoActual) ObjetivoActual = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+
+    if (!ObjetivoActual)
+    {
+        ObjetivoActual = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+    }
+
     if (ObjetivoActual)
     {
-        // Calcular rotación hacia el jugador (para la malla)
-        FRotator RotacionObjetivo = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ObjetivoActual->GetActorLocation());
+        // Rotación hacia el jugador
+        FRotator RotacionObjetivo =
+            UKismetMathLibrary::FindLookAtRotation(
+                GetActorLocation(),
+                ObjetivoActual->GetActorLocation()
+            );
 
-        // Ajustar el modelo si está desalineado (prueba con 90, -90, 180, etc.)
-        // Por defecto, el modelo mira a la derecha, entonces sumamos 90 grados para que mire al frente.
-        RotacionObjetivo.Yaw += 90.0f;  // Cambia este valor si es necesario
+        // Ajuste del modelo
+        RotacionObjetivo.Yaw += 90.0f;
 
-        // Aplicar rotación solo a la malla (el actor no se rota)
+        // Rotar la malla
         MallaDron->SetWorldRotation(RotacionObjetivo);
     }
 }
@@ -78,25 +104,51 @@ void ADronCentinela::EjecutarDisparoLaser()
 {
     if (ObjetivoActual)
     {
-        // Dirección hacia el jugador (el proyectil irá seguro)
-        FVector Direccion = (ObjetivoActual->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-        FVector Origen = GetActorLocation() + Direccion * 150.0f;
+        FVector Direccion =
+            (ObjetivoActual->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+
+        FVector Origen =
+            GetActorLocation() + Direccion * 150.0f;
 
         FActorSpawnParameters SpawnParams;
         SpawnParams.Owner = this;
         SpawnParams.Instigator = Cast<APawn>(this);
-        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        SpawnParams.SpawnCollisionHandlingOverride =
+            ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-        GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), Origen, Direccion.Rotation(), SpawnParams);
+        GetWorld()->SpawnActor<AProyectil>(
+            AProyectil::StaticClass(),
+            Origen,
+            Direccion.Rotation(),
+            SpawnParams
+        );
     }
 }
 
 void ADronCentinela::Destroyed()
 {
-    ALevelBuilder* Builder = Cast<ALevelBuilder>(UGameplayStatics::GetActorOfClass(GetWorld(), ALevelBuilder::StaticClass()));
+    // Sacar enemigo del HUD optimizado
+    ANavesArcadeGameMode* GM =
+        Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
+
+    if (GM)
+    {
+        GM->DesregistrarEnemigo(this);
+    }
+
+    // Notificar al builder
+    ALevelBuilder* Builder =
+        Cast<ALevelBuilder>(
+            UGameplayStatics::GetActorOfClass(
+                GetWorld(),
+                ALevelBuilder::StaticClass()
+            )
+        );
+
     if (Builder)
     {
         Builder->NotificarMuerteEnemigo();
     }
+
     Super::Destroyed();
 }

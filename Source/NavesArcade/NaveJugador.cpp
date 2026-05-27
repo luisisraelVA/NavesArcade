@@ -4,6 +4,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "InventoryComponent.h"
+#include "WeaponSystem.h" // Incluimos el header para acceder a sus funciones
 #include "NaveFacade.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/World.h"
@@ -12,7 +13,7 @@
 #include "LevelBuilder.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
-#include "NavesArcadeGameMode.h"   // ← IMPORTANTE: para usar ANavesArcadeGameMode
+#include "NavesArcadeGameMode.h"
 
 ANaveJugador::ANaveJugador()
 {
@@ -20,7 +21,7 @@ ANaveJugador::ANaveJugador()
     MallaNave = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaNave"));
     RootComponent = MallaNave;
     MallaNave->SetEnableGravity(false);
-    MallaNave->SetGenerateOverlapEvents(true);  // ¡CRUCIAL!
+    MallaNave->SetGenerateOverlapEvents(true);
 
     static ConstructorHelpers::FObjectFinder<UStaticMesh> ModeloNaveAsset(TEXT("StaticMesh'/Game/Flying/Meshes/UFO.UFO'"));
     if (ModeloNaveAsset.Succeeded()) MallaNave->SetStaticMesh(ModeloNaveAsset.Object);
@@ -39,6 +40,9 @@ ANaveJugador::ANaveJugador()
     Inventario = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventario"));
     FachadaNave = CreateDefaultSubobject<UNaveFacade>(TEXT("FachadaNave"));
 
+    // CORREGIDO: Inicialización real de la variable del componente de armas
+    SistemaArmas = CreateDefaultSubobject<UWeaponSystem>(TEXT("SistemaArmas"));
+
     IntegridadEstructural = 100.0f;
     VelocidadMovimiento = 1000.0f;
     VelocidadRotacion = 85.0f;
@@ -56,7 +60,6 @@ void ANaveJugador::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Configurar el requisito de núcleos según el nivel actual
     ANavesArcadeGameMode* GameMode = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
     if (Inventario && GameMode)
     {
@@ -75,12 +78,22 @@ void ANaveJugador::Tick(float DeltaTime)
     else BrazoCamara->SocketOffset = FVector::ZeroVector;
 }
 
+// Parte corregida de NaveJugador.cpp
+
 void ANaveJugador::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+    if (!PlayerInputComponent) return;
+
+    // Movimiento
     PlayerInputComponent->BindAxis("MoverAdelante", this, &ANaveJugador::MoverAdelante);
+
+    // Rotaciones
     PlayerInputComponent->BindAxis("RotarDerecha", this, &ANaveJugador::RotarDerecha);
     PlayerInputComponent->BindAxis("RotarArriba", this, &ANaveJugador::RotarArriba);
+
+    // Disparo
     PlayerInputComponent->BindAction("Disparar", IE_Pressed, this, &ANaveJugador::InicializarDisparo);
 }
 
@@ -109,7 +122,8 @@ void ANaveJugador::RecibirDano(float CantidadDano)
 {
     if (IntegridadEstructural <= 0.0f) return;
 
-   /* IntegridadEstructural -= CantidadDano;*/
+    // CORREGIDO: Quitamos el comentario para que la nave reciba daño real en combate
+    IntegridadEstructural -= CantidadDano;
     MultiplicadorCombo = 1.0f;
     TiempoTemblorCamara = 0.5f;
 
@@ -161,7 +175,6 @@ void ANaveJugador::RecolectarEnergia(float Cantidad)
     EnergiaActual = (float)NucleosRecolectados;
     SumarPuntos(1000);
 
-    // Obtener el requisito dinámico
     ANavesArcadeGameMode* GameMode = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
     int32 Requeridos = (Inventario ? Inventario->GetRequerimientoNivel() : (GameMode ? GameMode->GetNucleosRequeridos() : 3));
 
@@ -191,4 +204,9 @@ void ANaveJugador::ReiniciarNivel()
     FString NombreMapa = GetWorld()->GetMapName();
     NombreMapa.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
     UGameplayStatics::OpenLevel(GetWorld(), FName(*NombreMapa));
+}
+
+void ANaveJugador::Destroyed()
+{
+    Super::Destroyed();
 }

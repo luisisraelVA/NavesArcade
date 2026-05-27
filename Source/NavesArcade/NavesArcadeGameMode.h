@@ -45,9 +45,20 @@ private:
     UPROPERTY()
     UFaseFinalFab* FabricaFaseFinal;
 
+    UPROPERTY()
+    class UFaseAvanzadaFab* FabricaFaseAvanzada;
+
     int32 NivelActual;
     int32 NucleosRequeridos;
 
     void CargarRecetaNivel(int32 NumeroNivel);
     void LimpiarMapa();
+
+public:
+    // Lista optimizada de enemigos activos para el HUD
+    UPROPERTY()
+    TArray<AActor*> EnemigosActivos;
+
+    void RegistrarEnemigo(AActor* NuevoEnemigo) { EnemigosActivos.AddUnique(NuevoEnemigo); }
+    void DesregistrarEnemigo(AActor* EnemigoMuerto) { EnemigosActivos.Remove(EnemigoMuerto); }
 };

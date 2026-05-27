@@ -1,3 +1,5 @@
+
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -11,7 +13,9 @@ class NAVESARCADE_API ANaveNodriza : public APawn
 
 public:
     ANaveNodriza();
+
     virtual void Tick(float DeltaTime) override;
+
     void RecibirDano(float Dano);
 
 protected:
@@ -21,12 +25,18 @@ protected:
     UPROPERTY(VisibleAnywhere, Category = "Componentes")
     class UStaticMeshComponent* MallaJefe;
 
+    UPROPERTY()
     class UParticleSystem* EfectoMuerteMasiva;
 
     float VidaActual;
     float VidaMaxima;
+
     bool bFaseDos;
     bool bMuerto;
+
+    // --- NIVEL 9 ---
+    float AnguloEspiralAcumulado;
+    bool bEsNivelNueve;
 
     FTimerHandle TimerDisparoAbanico;
     FTimerHandle TimerInvocacion;
@@ -34,8 +44,14 @@ protected:
     FTimerHandle TimerMuerteCinematica;
 
     void DispararAbanico();
+
+    // --- NUEVO ATAQUE HELICOIDAL ---
+    void DispararEspiralHelicoidal();
+
     void InvocarKamikaze();
+
     void RestaurarMaterial();
+
     UFUNCTION()
     void FinalizarMuerteCinematica();
 };

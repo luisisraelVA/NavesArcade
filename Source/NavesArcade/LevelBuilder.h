@@ -5,7 +5,6 @@
 #include "LevelFab.h"
 #include "LevelBuilder.generated.h"
 
-// --- PATRÓN OBSERVER: Declaración del Delegado Multicast ---
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnNucleoRecolectadoSignature);
 
 UCLASS()
@@ -23,7 +22,9 @@ public:
     void GenerarFaseObjetivo();
     void NotificarMuerteEnemigo();
 
-    // --- PATRÓN OBSERVER: Instancia del evento para que los observadores se suscriban ---
+    bool bNucleoPendiente;   // Flag para evitar múltiples núcleos
+
+    // Observer
     UPROPERTY(BlueprintAssignable, Category = "Eventos Avanzados")
     FOnNucleoRecolectadoSignature OnNucleoRecolectado;
 
@@ -44,4 +45,7 @@ private:
     float VelocidadGlobal;
     int32 FaseActualMision;
     int32 EnemigosVivosEnSector;
+
+    bool bJefeAparecido;
+    bool bJefeDerrotado;
 };

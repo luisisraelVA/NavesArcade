@@ -122,8 +122,7 @@ void ANaveJugador::RecibirDano(float CantidadDano)
 {
     if (IntegridadEstructural <= 0.0f) return;
 
-    // CORREGIDO: Quitamos el comentario para que la nave reciba daño real en combate
-    IntegridadEstructural -= CantidadDano;
+    IntegridadEstructural -= CantidadDano;   // Daño real
     MultiplicadorCombo = 1.0f;
     TiempoTemblorCamara = 0.5f;
 
@@ -131,7 +130,7 @@ void ANaveJugador::RecibirDano(float CantidadDano)
 
     if (IntegridadEstructural <= 0.0f)
     {
-        VidasActuales--;
+        VidasActuales--;                     // Resta vidas
         SetActorHiddenInGame(true);
         SetActorEnableCollision(false);
 

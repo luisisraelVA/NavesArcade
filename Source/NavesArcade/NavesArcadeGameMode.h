@@ -53,6 +53,9 @@ private:
 
     void CargarRecetaNivel(int32 NumeroNivel);
     void LimpiarMapa();
+    // En NavesArcadeGameMode.h, dentro de la clase ANavesArcadeGameMode
+private:
+    static constexpr int32 NUMERO_TOTAL_NIVELES = 12;
 
 public:
     // Lista optimizada de enemigos activos para el HUD

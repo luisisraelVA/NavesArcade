@@ -3,6 +3,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
+#include "LevelBuilder.h"
 #include "NaveJugador.h"
 
 ANucleoEnergia::ANucleoEnergia()
@@ -19,17 +20,11 @@ ANucleoEnergia::ANucleoEnergia()
     MallaNucleo->SetupAttachment(RootComponent);
     MallaNucleo->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-    // Usar esfera en lugar de toro (el toro no existe en UE4.27)
     static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMesh(TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
     if (SphereMesh.Succeeded())
     {
         MallaNucleo->SetStaticMesh(SphereMesh.Object);
-        MallaNucleo->SetRelativeScale3D(FVector(2.0f, 2.0f, 2.0f)); // Tamaño visible
-    }
-    else
-    {
-        // Fallback extremo (nunca debería ocurrir)
-        UE_LOG(LogTemp, Error, TEXT("No se pudo cargar la esfera para el núcleo"));
+        MallaNucleo->SetRelativeScale3D(FVector(2.0f, 2.0f, 2.0f));
     }
 }
 
@@ -46,8 +41,15 @@ void ANucleoEnergia::AlSuperponerse(UPrimitiveComponent* OverlappedComponent, AA
     ANaveJugador* Jugador = Cast<ANaveJugador>(OtherActor);
     if (Jugador)
     {
-        if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, TEXT("¡NÚCLEO RECOGIDO!"));
         Jugador->RecolectarEnergia(1.0f);
+
+        ALevelBuilder* Builder = Cast<ALevelBuilder>(UGameplayStatics::GetActorOfClass(GetWorld(), ALevelBuilder::StaticClass()));
+        if (Builder)
+        {
+            Builder->bNucleoPendiente = false;
+            // No llamamos a GenerarFaseObjetivo aquí; RecolectarEnergia ya lo hace si es necesario
+        }
+
         Destroy();
     }
 }

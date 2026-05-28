@@ -10,6 +10,7 @@
 #include "NaveAcechadora.h"
 #include "NaveNodriza.h" 
 #include "NaveJugador.h"
+#include "DronHibridoAvanzado.h"
 
 AProyectil::AProyectil()
 {
@@ -68,7 +69,10 @@ void AProyectil::AlSuperponerse(UPrimitiveComponent* OverlappedComponent, AActor
             return;
         }
 
-        if (OtherActor->IsA(AAsteroideBase::StaticClass()) || OtherActor->IsA(ADronCentinela::StaticClass()) || OtherActor->IsA(ANaveAcechadora::StaticClass()))
+        if (OtherActor->IsA(AAsteroideBase::StaticClass()) ||
+            OtherActor->IsA(ADronCentinela::StaticClass()) ||
+            OtherActor->IsA(ANaveAcechadora::StaticClass()) ||
+            OtherActor->IsA(ADronHibridoAvanzado::StaticClass()))
         {
             if (EfectoExplosion) UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EfectoExplosion, OtherActor->GetActorLocation());
             ANaveJugador* Jugador = Cast<ANaveJugador>(GetOwner());

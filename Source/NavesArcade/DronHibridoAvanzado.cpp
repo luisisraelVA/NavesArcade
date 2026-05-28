@@ -20,7 +20,7 @@ ADronHibridoAvanzado::ADronHibridoAvanzado()
 
     // Mesh por defecto
     static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(
-        TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'")
+        TEXT("StaticMesh'/Game/MESH/SpaceShip.SpaceShip'")
     );
 
     if (MeshAsset.Succeeded())
@@ -33,8 +33,9 @@ ADronHibridoAvanzado::ADronHibridoAvanzado()
 
     VelocidadActual = 400.0f;
     VelocidadFrenetica = 800.0f;
-
     DireccionPatrulla = FVector(0.0f, 1.0f, 0.0f);
+
+    ObjetivoJugador = nullptr;   // Inicialización segura
 }
 
 void ADronHibridoAvanzado::BeginPlay()
@@ -45,7 +46,6 @@ void ADronHibridoAvanzado::BeginPlay()
 
     if (ObjetivoJugador)
     {
-        // Disparo automático
         GetWorldTimerManager().SetTimer(
             TimerCicloDisparo,
             this,
@@ -56,33 +56,17 @@ void ADronHibridoAvanzado::BeginPlay()
         );
     }
 
-    // Registrar enemigo en GameMode
-    ANavesArcadeGameMode* GM =
-        Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
-
-    if (GM)
-    {
-        GM->RegistrarEnemigo(this);
-    }
+    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
+    if (GM) GM->RegistrarEnemigo(this);
 
     // Observer Pattern
-    AActor* BuilderActor =
-        UGameplayStatics::GetActorOfClass(
-            GetWorld(),
-            ALevelBuilder::StaticClass()
-        );
-
+    AActor* BuilderActor = UGameplayStatics::GetActorOfClass(GetWorld(), ALevelBuilder::StaticClass());
     if (BuilderActor)
     {
-        ALevelBuilder* Builder =
-            Cast<ALevelBuilder>(BuilderActor);
-
+        ALevelBuilder* Builder = Cast<ALevelBuilder>(BuilderActor);
         if (Builder)
         {
-            Builder->OnNucleoRecolectado.AddDynamic(
-                this,
-                &ADronHibridoAvanzado::EscucharAlertaNucleo
-            );
+            Builder->OnNucleoRecolectado.AddDynamic(this, &ADronHibridoAvanzado::EscucharAlertaNucleo);
         }
     }
 }
@@ -91,38 +75,19 @@ void ADronHibridoAvanzado::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // Movimiento lateral
-    FVector Desplazamiento =
-        DireccionPatrulla *
-        VelocidadActual *
-        DeltaTime;
-
+    FVector Desplazamiento = DireccionPatrulla * VelocidadActual * DeltaTime;
     AddActorWorldOffset(Desplazamiento, true);
 
-    // Cambiar dirección
     if (FMath::Abs(GetActorLocation().Y) > 2500.0f)
-    {
         DireccionPatrulla *= -1.0f;
-    }
 
-    // Buscar jugador
     if (!ObjetivoJugador)
-    {
-        ObjetivoJugador =
-            UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-    }
+        ObjetivoJugador = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 
-    // Mirar al jugador
     if (ObjetivoJugador)
     {
-        FRotator RotacionHaciaNave =
-            UKismetMathLibrary::FindLookAtRotation(
-                GetActorLocation(),
-                ObjetivoJugador->GetActorLocation()
-            );
-
+        FRotator RotacionHaciaNave = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ObjetivoJugador->GetActorLocation());
         RotacionHaciaNave.Yaw += 90.0f;
-
         MallaDron->SetWorldRotation(RotacionHaciaNave);
     }
 }
@@ -131,78 +96,34 @@ void ADronHibridoAvanzado::EjecutarDisparoLaser()
 {
     if (!ObjetivoJugador) return;
 
-    FVector Direccion =
-        (ObjetivoJugador->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-
-    FVector Origen =
-        GetActorLocation() + (Direccion * 200.0f);
+    FVector Direccion = (ObjetivoJugador->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+    FVector Origen = GetActorLocation() + (Direccion * 200.0f);
 
     FActorSpawnParameters SpawnParams;
     SpawnParams.Owner = this;
     SpawnParams.Instigator = Cast<APawn>(this);
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-    SpawnParams.SpawnCollisionHandlingOverride =
-        ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-    GetWorld()->SpawnActor<AProyectil>(
-        AProyectil::StaticClass(),
-        Origen,
-        Direccion.Rotation(),
-        SpawnParams
-    );
+    GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), Origen, Direccion.Rotation(), SpawnParams);
 }
 
-// Observer Pattern
 void ADronHibridoAvanzado::EscucharAlertaNucleo()
 {
     VelocidadActual = VelocidadFrenetica;
-
-    // Disparo más agresivo
     GetWorldTimerManager().ClearTimer(TimerCicloDisparo);
-
-    GetWorldTimerManager().SetTimer(
-        TimerCicloDisparo,
-        this,
-        &ADronHibridoAvanzado::EjecutarDisparoLaser,
-        0.8f,
-        true
-    );
+    GetWorldTimerManager().SetTimer(TimerCicloDisparo, this, &ADronHibridoAvanzado::EjecutarDisparoLaser, 0.8f, true);
 
     if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(
-            -1,
-            3.f,
-            FColor::Red,
-            TEXT("?? OBSERVER ACTIVO: El Dron Híbrido se ha sobrecargado. ¡Ataque rápido!")
-        );
-    }
+        GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("OBSERVER ACTIVO: Dron Híbrido sobrecargado"));
 }
 
 void ADronHibridoAvanzado::Destroyed()
 {
-    // Sacar del HUD optimizado
-    ANavesArcadeGameMode* GM =
-        Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
+    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
+    if (GM) GM->DesregistrarEnemigo(this);
 
-    if (GM)
-    {
-        GM->DesregistrarEnemigo(this);
-    }
-
-    // Notificar al builder
-    ALevelBuilder* Builder =
-        Cast<ALevelBuilder>(
-            UGameplayStatics::GetActorOfClass(
-                GetWorld(),
-                ALevelBuilder::StaticClass()
-            )
-        );
-
-    if (Builder)
-    {
-        Builder->NotificarMuerteEnemigo();
-    }
+    ALevelBuilder* Builder = Cast<ALevelBuilder>(UGameplayStatics::GetActorOfClass(GetWorld(), ALevelBuilder::StaticClass()));
+    if (Builder) Builder->NotificarMuerteEnemigo();
 
     Super::Destroyed();
 }

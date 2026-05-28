@@ -57,6 +57,8 @@ void AAsteroideBase::Tick(float DeltaTime)
 
 void AAsteroideBase::AlSuperponerse(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Orange,
+        FString::Printf(TEXT("ASTEROIDE TOCA: %s"), *OtherActor->GetName()));
     if (OtherActor && OtherActor != this)
     {
         ANaveJugador* Jugador = Cast<ANaveJugador>(OtherActor);

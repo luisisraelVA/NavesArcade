@@ -60,7 +60,7 @@ void ALevelDirector::ConstruirNivel3()
     Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
 }
 
-// Niveles 4,5,6 más difíciles (independientemente de la dificultad global, se puede mezclar)
+// Niveles 4,5,6: dificultad media-alta (independiente de la dificultad global)
 void ALevelDirector::ConstruirNivel4()
 {
     if (!Builder) return;
@@ -77,41 +77,56 @@ void ALevelDirector::ConstruirNivel6()
     Builder->SpawnAsteroides(300, 1800.0f);
 }
 
-// Del nivel 7 al 12 (no usados) repiten nivel 3
+// ========== NIVELES 7, 8, 9: DIFICULTAD "DIFÍCIL" ==========
 void ALevelDirector::ConstruirNivel7()
 {
     if (!Builder) return;
-    // Nivel 7: Enjambre denso. Muchos asteroides a velocidad muy alta
-    Builder->SpawnAsteroides(340, 2000.0f);
+    // Alta densidad y velocidad
+    Builder->SpawnAsteroides(380, 2200.0f);
 }
 
 void ALevelDirector::ConstruirNivel8()
 {
     if (!Builder) return;
-    // Nivel 8: Velocidad extrema, requiere reflejos perfectos
-    Builder->SpawnAsteroides(380, 2200.0f);
+    // Mayor densidad que nivel 7
+    Builder->SpawnAsteroides(420, 2500.0f);
 }
 
 void ALevelDirector::ConstruirNivel9()
 {
     if (!Builder) return;
-    // Tormenta extrema de asteroides
-
+    // Tormenta extrema de asteroides (pero aún controlable)
     Builder->SpawnAsteroides(550, 2800.0f);
-
-    // Refuerzo extra para saturar el mapa
-    Builder->SpawnAsteroides(120, 3200.0f);
+    Builder->SpawnAsteroides(120, 3200.0f); // oleada extra muy rápida
 
     if (GEngine)
     {
-        GEngine->AddOnScreenDebugMessage(
-            -1,
-            6.f,
-            FColor::Red,
-            TEXT("? NIVEL 9: EL CORAZON DEL ABISMO ?")
-        );
+        GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, TEXT("NIVEL 9: DIFICULTAD DIFÍCIL"));
     }
 }
-void ALevelDirector::ConstruirNivel10() { ConstruirNivel3(); }
-void ALevelDirector::ConstruirNivel11() { ConstruirNivel3(); }
-void ALevelDirector::ConstruirNivel12() { ConstruirNivel3(); }
+
+// ========== NIVELES 10, 11, 12: DIFICULTAD "SÚPER DIFÍCIL" ==========
+void ALevelDirector::ConstruirNivel10()
+{
+    if (!Builder) return;
+    // Densidad masiva, velocidad letal
+    Builder->SpawnAsteroides(480, 3000.0f);
+    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("NIVEL 10: SÚPER DIFÍCIL"));
+}
+
+void ALevelDirector::ConstruirNivel11()
+{
+    if (!Builder) return;
+    // Casi saturación
+    Builder->SpawnAsteroides(600, 3500.0f);
+    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("NIVEL 11: SÚPER DIFÍCIL"));
+}
+
+void ALevelDirector::ConstruirNivel12()
+{
+    if (!Builder) return;
+    // El jefe es la amenaza principal, pero asteroides de apoyo muy agresivos
+    Builder->SpawnAsteroides(350, 2800.0f);
+    Builder->SpawnAsteroides(80, 4000.0f); // ráfaga supersónica
+    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("NIVEL 12: SÚPER DIFÍCIL - JEFE FINAL"));
+}

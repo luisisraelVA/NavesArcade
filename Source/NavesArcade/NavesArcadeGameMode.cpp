@@ -66,80 +66,70 @@ void ANavesArcadeGameMode::BeginPlay()
 
 void ANavesArcadeGameMode::ActualizarRequerimientoPorNivel()
 {
-    if (NivelActual <= 2)      NucleosRequeridos = 3;
-    else if (NivelActual <= 4) NucleosRequeridos = 4;
-    else if (NivelActual <= 6) NucleosRequeridos = 5;
-    else                       NucleosRequeridos = 6; // Exigimos 6 núcleos para los niveles difíciles 7, 8 y 9
+    if (NivelActual <= 2)          NucleosRequeridos = 3;
+    else if (NivelActual <= 4)     NucleosRequeridos = 4;
+    else if (NivelActual <= 6)     NucleosRequeridos = 5;
+    else if (NivelActual <= 9)     NucleosRequeridos = 6;   // Niveles 7,8,9 difíciles
+    else                           NucleosRequeridos = 7;   // Niveles 10,11,12 súper difíciles
 }
 
 void ANavesArcadeGameMode::CargarRecetaNivel(int32 NumeroNivel)
 {
     if (!InstanciaBuilder || !InstanciaDirector) return;
 
-
-    // Asignación de fábricas según el bloque de niveles (Patrón Abstract Factory mejorado)
+    // --- ASIGNAR FÁBRICA DE ENEMIGOS (Abstract Factory) ---
     if (NumeroNivel <= 3)
-        InstanciaBuilder->SetFabrica(FabricaFaseUno);
+        InstanciaBuilder->SetFabrica(FabricaFaseUno);      // Dron Centinela
     else if (NumeroNivel <= 6)
-        InstanciaBuilder->SetFabrica(FabricaFaseFinal);
+        InstanciaBuilder->SetFabrica(FabricaFaseFinal);     // Nave Acechadora
     else
-        InstanciaBuilder->SetFabrica(FabricaFaseAvanzada); // ? Para Niveles 7, 8 y 9 usar la del Dron Híbrido Observer
-    // Configuración de tipos de asteroides por nivel
-   
+        InstanciaBuilder->SetFabrica(FabricaFaseAvanzada);  // Dron Híbrido Avanzado (niveles 7-12)
 
+    // --- ASIGNAR TIPO DE ASTEROIDE ---
     if (NumeroNivel == 1)
-    {
         InstanciaBuilder->SetClaseAsteroide(AAsteroideDinamico::StaticClass());
-    }
     else if (NumeroNivel == 2)
-    {
         InstanciaBuilder->SetClaseAsteroide(AAsteroideErratico::StaticClass());
-    }
-    else if (NumeroNivel == 8)
-    {
-        // Nivel especial fractal
+    else if (NumeroNivel == 8 || NumeroNivel == 10 || NumeroNivel == 11)
         InstanciaBuilder->SetClaseAsteroide(AAsteroideFractal::StaticClass());
-    }
-    else
-    {
+    else if (NumeroNivel >= 9)
         InstanciaBuilder->SetClaseAsteroide(AAsteroideExplosivo::StaticClass());
-    }
+    else
+        InstanciaBuilder->SetClaseAsteroide(AAsteroideDinamico::StaticClass());
 
-    // Ejecutar la construcción en el Director (Casos independientes del 1 al 9)
+    // --- CONSTRUIR EL NIVEL CON EL DIRECTOR ---
     switch (NumeroNivel)
     {
-    case 1: InstanciaDirector->ConstruirNivel1(); break;
-    case 2: InstanciaDirector->ConstruirNivel2(); break;
-    case 3: InstanciaDirector->ConstruirNivel3(); break;
-    case 4: InstanciaDirector->ConstruirNivel4(); break;
-    case 5: InstanciaDirector->ConstruirNivel5(); break;
-    case 6: InstanciaDirector->ConstruirNivel6(); break;
-    case 7: InstanciaDirector->ConstruirNivel7(); break;
-    case 8: InstanciaDirector->ConstruirNivel8(); break;
-    case 9: InstanciaDirector->ConstruirNivel9(); break;
-    default: InstanciaDirector->ConstruirNivel1(); break;
+    case 1:  InstanciaDirector->ConstruirNivel1();  break;
+    case 2:  InstanciaDirector->ConstruirNivel2();  break;
+    case 3:  InstanciaDirector->ConstruirNivel3();  break;
+    case 4:  InstanciaDirector->ConstruirNivel4();  break;
+    case 5:  InstanciaDirector->ConstruirNivel5();  break;
+    case 6:  InstanciaDirector->ConstruirNivel6();  break;
+    case 7:  InstanciaDirector->ConstruirNivel7();  break;
+    case 8:  InstanciaDirector->ConstruirNivel8();  break;
+    case 9:  InstanciaDirector->ConstruirNivel9();  break;
+    case 10: InstanciaDirector->ConstruirNivel10(); break;
+    case 11: InstanciaDirector->ConstruirNivel11(); break;
+    case 12: InstanciaDirector->ConstruirNivel12(); break;
+    default: InstanciaDirector->ConstruirNivel1();  break;
     }
 }
 
 void ANavesArcadeGameMode::AvanzarSiguienteNivel()
 {
-    // --- CAMBIO DE NIVEL AUTOMÁTICO ---
     int32 ProximoNivel = NivelActual + 1;
-
-    // Si pasamos el clímax del nivel 9, reiniciamos el ciclo al nivel 1
-    if (ProximoNivel > 9)
+    if (ProximoNivel > NUMERO_TOTAL_NIVELES)
     {
-        ProximoNivel = 1;
+        if (GEngine)
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, TEXT("¡VICTORIA! Has completado todos los niveles."));
+        // Aquí puedes abrir un nivel de créditos o menú principal
+        // UGameplayStatics::OpenLevel(GetWorld(), "MenuPrincipal");
+        return;
     }
 
-    // Formatea de forma segura el string (ej: si es 7 genera "Nivel-07")
     FString NombreSiguienteNivel = FString::Printf(TEXT("Nivel-%02d"), ProximoNivel);
-    FName NivelSiguiente = FName(*NombreSiguienteNivel);
-
-    if (GEngine)
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Cargando %s..."), *NombreSiguienteNivel));
-
-    UGameplayStatics::OpenLevel(GetWorld(), NivelSiguiente);
+    UGameplayStatics::OpenLevel(GetWorld(), FName(*NombreSiguienteNivel));
 }
 
 void ANavesArcadeGameMode::LimpiarMapa()

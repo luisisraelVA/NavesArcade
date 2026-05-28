@@ -48,6 +48,7 @@ void ADodgerHUD::DrawHUD()
         NivelActual = FCString::Atoi(*NumStr);
     }
 
+
     if (VidasRestantes > 0 && VidaReal > 0)
     {
         // --- PANEL PRINCIPAL ---
@@ -153,8 +154,8 @@ void ADodgerHUD::DrawHUD()
     }
     else if (VidaReal <= 0.0f && VidasRestantes > 0)
     {
-        DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.6f), 0.0f, 0.0f, AnchoPantalla, AltoPantalla);
-        DrawText(TEXT("RECONSTRUYENDO NAVE..."), FLinearColor::Yellow, (AnchoPantalla / 2.0f) - 250.0f, (AltoPantalla / 2.0f) - 50.0f, FuentePrincipal, 2.5f);
+        //DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.6f), 0.0f, 0.0f, AnchoPantalla, AltoPantalla);
+        //DrawText(TEXT("RECONSTRUYENDO NAVE..."), FLinearColor::Yellow, (AnchoPantalla / 2.0f) - 250.0f, (AltoPantalla / 2.0f) - 50.0f, FuentePrincipal, 2.5f);
     }
     else if (VidasRestantes <= 0)
     {

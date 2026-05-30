@@ -9,7 +9,8 @@ enum class EEnemyType : uint8
 {
     Sentry      UMETA(DisplayName = "Dron Centinela"),
     Hunter      UMETA(DisplayName = "Nave Acechadora"),
-    Boss        UMETA(DisplayName = "Nave Nodriza")
+    Boss        UMETA(DisplayName = "Nave Nodriza"),
+    Advanced    UMETA(DisplayName = "Dron Hibrido Avanzado") // <-- Añadido para el Dron Híbrido
 };
 
 UCLASS()

@@ -1,5 +1,6 @@
 #include "LevelDirector.h"
 #include "LevelBuilder.h"
+#include "Engine/Engine.h" // <-- CORREGIDO: Inclusión necesaria para usar GEngine sin errores
 
 ALevelDirector::ALevelDirector()
 {
@@ -77,56 +78,53 @@ void ALevelDirector::ConstruirNivel6()
     Builder->SpawnAsteroides(300, 1800.0f);
 }
 
-// ========== NIVELES 7, 8, 9: DIFICULTAD "DIFÍCIL" ==========
+// ========== NIVELES 7, 8, 9: DIFICULTAD "DIFÍCIL" (CONTROLADA) ==========
 void ALevelDirector::ConstruirNivel7()
 {
     if (!Builder) return;
-    // Alta densidad y velocidad
-    Builder->SpawnAsteroides(380, 2200.0f);
+    Builder->SpawnAsteroides(280, 1600.0f); // Bajado para dar una curva suave
 }
 
 void ALevelDirector::ConstruirNivel8()
 {
     if (!Builder) return;
-    // Mayor densidad que nivel 7
-    Builder->SpawnAsteroides(420, 2500.0f);
+    Builder->SpawnAsteroides(320, 1900.0f); // Desafiante, pero manejable con fractales
 }
 
 void ALevelDirector::ConstruirNivel9()
 {
     if (!Builder) return;
-    // Tormenta extrema de asteroides (pero aún controlable)
-    Builder->SpawnAsteroides(550, 2800.0f);
-    Builder->SpawnAsteroides(120, 3200.0f); // oleada extra muy rápida
+    // CORREGIDO: Un solo llamado para evitar que el timer se quede buclado en memoria
+    Builder->SpawnAsteroides(380, 2200.0f);
 
     if (GEngine)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, TEXT("NIVEL 9: DIFICULTAD DIFÍCIL"));
+        GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Orange, TEXT("NIVEL 9: EL GRAN CAMINO AL INFIERNO"));
     }
 }
 
-// ========== NIVELES 10, 11, 12: DIFICULTAD "SÚPER DIFÍCIL" ==========
+// ========== NIVELES 10, 11, 12: DIFICULTAD "IMPOSIBLE" (EL VERDADERO RETO) ==========
 void ALevelDirector::ConstruirNivel10()
 {
     if (!Builder) return;
-    // Densidad masiva, velocidad letal
-    Builder->SpawnAsteroides(480, 3000.0f);
-    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("NIVEL 10: SÚPER DIFÍCIL"));
+    // Saturación masiva de Asteroides Fractales (Se dividen en el aire)
+    Builder->SpawnAsteroides(550, 3200.0f);
+    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("NIVEL 10: ¡DIFICULTAD IMPOSIBLE - TORMENTA FRACTAL!"));
 }
 
 void ALevelDirector::ConstruirNivel11()
 {
     if (!Builder) return;
-    // Casi saturación
-    Builder->SpawnAsteroides(600, 3500.0f);
-    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("NIVEL 11: SÚPER DIFÍCIL"));
+    // Velocidad absurda con Asteroides Fractales
+    Builder->SpawnAsteroides(650, 3800.0f);
+    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("NIVEL 11: ¡DIFICULTAD IMPOSIBLE - VELOCIDAD CRÍTICA!"));
 }
 
 void ALevelDirector::ConstruirNivel12()
 {
     if (!Builder) return;
-    // El jefe es la amenaza principal, pero asteroides de apoyo muy agresivos
-    Builder->SpawnAsteroides(350, 2800.0f);
-    Builder->SpawnAsteroides(80, 4000.0f); // ráfaga supersónica
-    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("NIVEL 12: SÚPER DIFÍCIL - JEFE FINAL"));
+    // El fin del mundo: Asteroides explosivos a velocidad supersónica (Te quitan 50 de vida por impacto)
+    Builder->SpawnAsteroides(750, 4200.0f);
+
+    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("NIVEL 12: ¡ENFRENTA AL DIOS DE LA NODRIZA!"));
 }

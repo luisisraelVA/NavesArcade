@@ -119,10 +119,21 @@ void ADronHibridoAvanzado::EscucharAlertaNucleo()
 
 void ADronHibridoAvanzado::Destroyed()
 {
+    // Limpieza del delegado Observer para evitar Memory Leaks antes de morir
+    AActor* BuilderActor = UGameplayStatics::GetActorOfClass(GetWorld(), ALevelBuilder::StaticClass());
+    if (BuilderActor)
+    {
+        ALevelBuilder* Builder = Cast<ALevelBuilder>(BuilderActor);
+        if (Builder)
+        {
+            Builder->OnNucleoRecolectado.RemoveDynamic(this, &ADronHibridoAvanzado::EscucharAlertaNucleo);
+        }
+    }
+
     ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
     if (GM) GM->DesregistrarEnemigo(this);
 
-    ALevelBuilder* Builder = Cast<ALevelBuilder>(UGameplayStatics::GetActorOfClass(GetWorld(), ALevelBuilder::StaticClass()));
+    ALevelBuilder* Builder = Cast<ALevelBuilder>(BuilderActor);
     if (Builder) Builder->NotificarMuerteEnemigo();
 
     Super::Destroyed();

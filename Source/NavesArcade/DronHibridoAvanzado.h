@@ -2,11 +2,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "GameFramework/Pawn.h" // <-- CAMBIADO: Inclusión obligatoria para APawn
 #include "DronHibridoAvanzado.generated.h"
 
 UCLASS()
-class NAVESARCADE_API ADronHibridoAvanzado : public AActor
+class NAVESARCADE_API ADronHibridoAvanzado : public APawn // <-- CAMBIADO: Ahora hereda de APawn
 {
     GENERATED_BODY()
 
@@ -16,7 +16,7 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void Destroyed() override;
-  
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes")
     class UStaticMeshComponent* MallaDron;
 

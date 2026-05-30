@@ -2,6 +2,7 @@
 #include "DronCentinela.h"
 #include "NaveAcechadora.h"
 #include "NaveNodriza.h"
+#include "DronHibridoAvanzado.h" 
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 
@@ -24,6 +25,9 @@ AActor* UEnemyFactory::SpawnEnemy(UWorld* World, EEnemyType Type, FVector Locati
         break;
     case EEnemyType::Boss:
         NuevoEnemigo = World->SpawnActor<ANaveNodriza>(ANaveNodriza::StaticClass(), Location, FRotator::ZeroRotator, SpawnParams);
+        break;
+    case EEnemyType::Advanced: // <-- Caso mapeado para el Dron Híbrido Avanzado
+        NuevoEnemigo = World->SpawnActor<ADronHibridoAvanzado>(ADronHibridoAvanzado::StaticClass(), Location, FRotator::ZeroRotator, SpawnParams);
         break;
     }
 

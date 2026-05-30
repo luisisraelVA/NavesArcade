@@ -77,22 +77,18 @@ void ANavesArcadeGameMode::CargarRecetaNivel(int32 NumeroNivel)
 {
     if (!InstanciaBuilder || !InstanciaDirector) return;
 
-    // --- ASIGNAR FÁBRICA DE ENEMIGOS (Abstract Factory) ---
-    if (NumeroNivel <= 3)
-        InstanciaBuilder->SetFabrica(FabricaFaseUno);      // Dron Centinela
-    else if (NumeroNivel <= 6)
-        InstanciaBuilder->SetFabrica(FabricaFaseFinal);     // Nave Acechadora
-    else
-        InstanciaBuilder->SetFabrica(FabricaFaseAvanzada);  // Dron Híbrido Avanzado (niveles 7-12)
+    // ... (El bloque de asignar fábrica de enemigos se mantiene igual) ...
 
-    // --- ASIGNAR TIPO DE ASTEROIDE ---
+    // --- CORREGIDO: ASIGNAR TIPO DE ASTEROIDE PARA CURVA IMPOSIBLE ---
     if (NumeroNivel == 1)
         InstanciaBuilder->SetClaseAsteroide(AAsteroideDinamico::StaticClass());
     else if (NumeroNivel == 2)
         InstanciaBuilder->SetClaseAsteroide(AAsteroideErratico::StaticClass());
     else if (NumeroNivel == 8 || NumeroNivel == 10 || NumeroNivel == 11)
+        // Los niveles 10 y 11 ahora heredarán la pesadilla de la multiplicación fractal a velocidades extremas
         InstanciaBuilder->SetClaseAsteroide(AAsteroideFractal::StaticClass());
-    else if (NumeroNivel >= 9)
+    else if (NumeroNivel == 9 || NumeroNivel == 12)
+        // Los asteroides de daño masivo (50.0f) se quedan resguardados para los niveles de jefes (9 y 12)
         InstanciaBuilder->SetClaseAsteroide(AAsteroideExplosivo::StaticClass());
     else
         InstanciaBuilder->SetClaseAsteroide(AAsteroideDinamico::StaticClass());

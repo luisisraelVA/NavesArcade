@@ -60,15 +60,19 @@ void ANaveNodriza::BeginPlay()
         default: VidaMaxima = 800.0f; break;
         }
         VidaActual = VidaMaxima;
-        if (GameMode->GetNivelActual() == 9) bEsNivelNueve = true;
+
+        // CAMBIADO: Ahora el verdadero infierno de balas se activa en el clímax final (Nivel 12)
+        if (GameMode->GetNivelActual() == 12) bEsNivelNueve = true;
     }
 
     if (bEsNivelNueve)
     {
+        // 12.5 balas por segundo en espiral helicoidal
         GetWorldTimerManager().SetTimer(TimerDisparoAbanico, this, &ANaveNodriza::DispararEspiralHelicoidal, 0.08f, true, 1.0f);
     }
     else
     {
+        // El nivel 9 ahora disparará el abanico normal cada 1.5s, haciéndolo justo
         GetWorldTimerManager().SetTimer(TimerDisparoAbanico, this, &ANaveNodriza::DispararAbanico, 1.5f, true, 1.0f);
     }
 }

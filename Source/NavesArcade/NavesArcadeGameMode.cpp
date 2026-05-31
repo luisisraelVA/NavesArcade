@@ -1,4 +1,4 @@
-#include "NavesArcadeGameMode.h"
+ï»¿#include "NavesArcadeGameMode.h"
 #include "NaveJugador.h"
 #include "DodgerHUD.h"
 #include "Kismet/GameplayStatics.h"
@@ -71,7 +71,7 @@ void ANavesArcadeGameMode::CargarRecetaNivel(int32 NumeroNivel)
 {
     if (!InstanciaBuilder || !InstanciaDirector) return;
 
-    // Fábrica de enemigos según rango de niveles
+    // FÃ¡brica de enemigos segÃºn rango de niveles
     if (NumeroNivel <= 3)
         InstanciaBuilder->SetFabrica(FabricaFaseUno);
     else if (NumeroNivel <= 6)

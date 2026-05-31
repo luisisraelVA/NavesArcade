@@ -15,7 +15,6 @@ class ANavesArcadeGameMode : public AGameModeBase
 {
     GENERATED_BODY()
 
-
 public:
     ANavesArcadeGameMode();
 
@@ -25,14 +24,13 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dificultad")
     EDificultad DificultadActual = EDificultad::Medio;
 
-
-
-    // Nivel actual (1..6)
+    // Nivel actual (1..12)
     int32 GetNivelActual() const { return NivelActual; }
     int32 GetNucleosRequeridos() const { return NucleosRequeridos; }
     void ActualizarRequerimientoPorNivel();
 
     // Variable para saber si el juego ha terminado (victoria)
+    UPROPERTY(BlueprintReadOnly, Category = "GameState")
     bool bJuegoCompletado = false;
 
 protected:
@@ -60,8 +58,10 @@ private:
     void CargarRecetaNivel(int32 NumeroNivel);
     void LimpiarMapa();
 
-private:
     static constexpr int32 NUMERO_TOTAL_NIVELES = 12;
+
+    // Función que se llama al terminar el juego
+    void FinalizarJuego();
 
 public:
     // Lista optimizada de enemigos activos para el HUD

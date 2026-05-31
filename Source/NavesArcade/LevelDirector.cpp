@@ -108,7 +108,7 @@ void ALevelDirector::ConstruirNivel10()
 {
     if (!Builder) return;
     // Saturación masiva de Asteroides Fractales (Se dividen en el aire)
-    Builder->SpawnAsteroides(550, 3200.0f);
+    Builder->SpawnAsteroides(600, 3500.0f);
     if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("NIVEL 10: ¡DIFICULTAD IMPOSIBLE - TORMENTA FRACTAL!"));
 }
 
@@ -116,7 +116,7 @@ void ALevelDirector::ConstruirNivel11()
 {
     if (!Builder) return;
     // Velocidad absurda con Asteroides Fractales
-    Builder->SpawnAsteroides(650, 3800.0f);
+    Builder->SpawnAsteroides(700, 4200.0f);
     if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("NIVEL 11: ¡DIFICULTAD IMPOSIBLE - VELOCIDAD CRÍTICA!"));
 }
 

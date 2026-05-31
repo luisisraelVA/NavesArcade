@@ -122,7 +122,7 @@ void ANaveJugador::RecibirDano(float CantidadDano)
 {
     if (IntegridadEstructural <= 0.0f) return;
 
-    IntegridadEstructural -= CantidadDano;   // Daño real
+    //IntegridadEstructural -= CantidadDano;   // Daño real
     MultiplicadorCombo = 1.0f;
     TiempoTemblorCamara = 0.5f;
 

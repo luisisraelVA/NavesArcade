@@ -15,13 +15,24 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void Destroyed() override;
+   
 
-    UPROPERTY(VisibleAnywhere, Category = "Visual")
+    UPROPERTY(VisibleAnywhere, Category = "Componentes")
     class UStaticMeshComponent* MallaEnemigo;
 
     UPROPERTY(EditAnywhere, Category = "IA")
     float VelocidadPersecucion;
 
+    // Nuevo: Temporizador para disparar
+    FTimerHandle TimerDisparo;
+
+    // Nuevo: Cadencia de disparo (segundos entre disparos)
+    UPROPERTY(EditAnywhere, Category = "Combate")
+    float CadenciaDisparo;
+
+    void Disparar();
+
+    UPROPERTY()
     class APawn* TargetJugador;
 
 public:

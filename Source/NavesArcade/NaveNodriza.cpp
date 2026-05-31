@@ -16,7 +16,7 @@ ANaveNodriza::ANaveNodriza()
     MallaJefe = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaJefe"));
     RootComponent = MallaJefe;
 
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("StaticMesh'/Game/MESH/Defender-class.Defender-class'"));
     if (CubeMesh.Succeeded())
     {
         MallaJefe->SetStaticMesh(CubeMesh.Object);
@@ -43,6 +43,7 @@ ANaveNodriza::ANaveNodriza()
 
     static ConstructorHelpers::FObjectFinder<UParticleSystem> ParticulaAsset(TEXT("ParticleSystem'/Game/StarterContent/Particles/P_Explosion.P_Explosion'"));
     if (ParticulaAsset.Succeeded()) EfectoMuerteMasiva = ParticulaAsset.Object;
+    else EfectoMuerteMasiva = nullptr;
 }
 
 void ANaveNodriza::BeginPlay()
@@ -59,20 +60,25 @@ void ANaveNodriza::BeginPlay()
         case EDificultad::Dificil: VidaMaxima = 1000.0f; break;
         default: VidaMaxima = 800.0f; break;
         }
-        VidaActual = VidaMaxima;
 
-        // CAMBIADO: Ahora el verdadero infierno de balas se activa en el clímax final (Nivel 12)
-        if (GameMode->GetNivelActual() == 12) bEsNivelNueve = true;
+        // Si es nivel 12, reducimos la vida para que sea más rápida (opcional)
+        if (GameMode->GetNivelActual() == 12)
+        {
+            VidaMaxima = 400.0f;
+            bEsNivelNueve = true; // Activa el ataque espiral en nivel 12
+        }
+
+        VidaActual = VidaMaxima;
     }
 
     if (bEsNivelNueve)
     {
-        // 12.5 balas por segundo en espiral helicoidal
+        // Ataque espiral rápido (cada 0.08 segundos)
         GetWorldTimerManager().SetTimer(TimerDisparoAbanico, this, &ANaveNodriza::DispararEspiralHelicoidal, 0.08f, true, 1.0f);
     }
     else
     {
-        // El nivel 9 ahora disparará el abanico normal cada 1.5s, haciéndolo justo
+        // Ataque en abanico normal (cada 1.5 segundos)
         GetWorldTimerManager().SetTimer(TimerDisparoAbanico, this, &ANaveNodriza::DispararAbanico, 1.5f, true, 1.0f);
     }
 }
@@ -88,6 +94,7 @@ void ANaveNodriza::Tick(float DeltaTime)
         FVector Direccion = (Jugador->GetActorLocation() - GetActorLocation()).GetSafeNormal();
         AddActorWorldOffset(Direccion * 150.0f * DeltaTime);
         FRotator RotObjetivo = Direccion.Rotation();
+        RotObjetivo.Pitch -= 90.0f;
         SetActorRotation(FMath::RInterpTo(GetActorRotation(), RotObjetivo, DeltaTime, 2.0f));
     }
     AddActorWorldOffset(FVector(0.0f, 0.0f, FMath::Sin(GetWorld()->GetTimeSeconds() * 2.0f) * 80.0f * DeltaTime));
@@ -96,7 +103,13 @@ void ANaveNodriza::Tick(float DeltaTime)
     {
         bFaseDos = true;
         if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("NODRIZA ENFURECIDA!"));
-        GetWorldTimerManager().SetTimer(TimerInvocacion, this, &ANaveNodriza::InvocarKamikaze, 2.5f, true);
+
+        // No invocar kamikazes en nivel 12
+        ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
+        if (GM && GM->GetNivelActual() != 12)
+        {
+            GetWorldTimerManager().SetTimer(TimerInvocacion, this, &ANaveNodriza::InvocarKamikaze, 2.5f, true);
+        }
     }
 }
 
@@ -140,6 +153,8 @@ void ANaveNodriza::InvocarKamikaze()
 
 void ANaveNodriza::RecibirDano(float Dano)
 {
+    GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("Nodriza recibe daño: %.1f"), Dano));
+
     if (bMuerto) return;
     VidaActual -= Dano;
     SetActorScale3D(FVector(4.8f, 4.8f, 4.8f));

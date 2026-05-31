@@ -10,6 +10,8 @@
 #include "DronHibridoAvanzado.h"
 #include "NaveJugador.h"
 #include "NavesArcadeGameMode.h"
+#include "DronSuicida.h"
+#include "NaveElite.h"
 
 ALevelBuilder::ALevelBuilder()
 {
@@ -49,67 +51,99 @@ void ALevelBuilder::GenerarFaseObjetivo()
     ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
     if (!GM) return;
 
-    int32 NucleosRequeridos = GM->GetNucleosRequeridos();
     int32 NivelActual = GM->GetNivelActual();
 
-    bool bEsUltimaFase = (FaseActualMision == NucleosRequeridos - 1);
+    // ========== NIVEL 12: JEFE + ESCOLTAS (SOLO ESTA OLEADA) ==========
+    if (NivelActual == 12)
+    {
+        if (!bJefeAparecido)
+        {
+            bJefeAparecido = true;
+            FVector UbicacionBase = PlayerPawn->GetActorLocation() + (PlayerPawn->GetActorForwardVector() * 8000.0f);
+            UbicacionBase += FVector(0.0f, FMath::RandRange(-3000.0f, 3000.0f), FMath::RandRange(-2000.0f, 2000.0f));
 
+            // Spawn del jefe (Nave Nodriza)
+            UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Boss, UbicacionBase + FVector(2000.0f, 0.0f, 0.0f));
+
+            // Spawn de escoltas (por ejemplo, 3 Acechadoras)
+            int32 NumEscoltas = 7;
+            for (int32 i = 0; i < NumEscoltas; i++)
+            {
+                FVector PosEnemigo = UbicacionBase + FVector(FMath::RandRange(-1500.f, 1500.f), FMath::RandRange(-1500.f, 1500.f), FMath::RandRange(-800.f, 800.f));
+                UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Hunter, PosEnemigo);
+            }
+
+            EnemigosVivosEnSector = 1 + NumEscoltas;
+        }
+        return; // Salir para que no se ejecute ninguna otra lógica de oleadas
+    }
+
+    // ========== NIVELES 1 AL 11: LÓGICA ORIGINAL (NO MODIFICADA) ==========
+    int32 NucleosRequeridos = GM->GetNucleosRequeridos();
+    bool bEsUltimaFase = (FaseActualMision == NucleosRequeridos - 1);
     FVector UbicacionBase = PlayerPawn->GetActorLocation() + (PlayerPawn->GetActorForwardVector() * 8000.0f);
     UbicacionBase += FVector(0.0f, FMath::RandRange(-3000.0f, 3000.0f), FMath::RandRange(-2000.0f, 2000.0f));
-
     int32 NumEnemigos = 0;
 
     if (bEsUltimaFase)
     {
         bJefeAparecido = true;
 
-        // El Nivel 12 tiene la cantidad máxima de escoltas (12)
-        int32 Escoltas = (NivelActual == 12) ? 12 : (3 + (NivelActual - 1));
-        NumEnemigos = 1 + Escoltas;
-
-        // Spawnea al jefe físico únicamente en las fases de jefe reales (Nivel 9 y Nivel 12)
-        if (NivelActual == 9 || NivelActual == 12)
+        if (NivelActual == 12)
         {
+            // NIVEL 12: solo jefe
+            NumEnemigos = 1;
             UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Boss, UbicacionBase + FVector(2000.0f, 0.0f, 0.0f));
         }
-        else
+        else if (NivelActual == 9)
         {
-            // En los niveles imposibles 10 y 11, la última fase es una horda masiva avanzada
-            NumEnemigos = Escoltas + 5;
-        }
-
-        for (int32 i = 0; i < NumEnemigos; i++)
-        {
-            FVector PosEnemigo = UbicacionBase + FVector(FMath::RandRange(-2000.f, 2000.f), FMath::RandRange(-1800.f, 1800.f), FMath::RandRange(-1000.f, 1000.f));
-
-            // CONFIGURACIÓN DE OLEADA DE JEFES SEGÚN EL NIVEL
-            if (NivelActual == 12)
+            // Nivel 9: jefe + escoltas mixtos
+            int32 Escoltas = 12;
+            NumEnemigos = 1 + Escoltas;
+            UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Boss, UbicacionBase + FVector(2000.0f, 0.0f, 0.0f));
+            for (int32 i = 0; i < Escoltas; i++)
             {
-                // Mezcla directa usando la factoría estática global
-                if (i % 3 == 0)
-                    UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Hunter, PosEnemigo);
-                else if (i % 3 == 1)
-                    UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Sentry, PosEnemigo);
-                else
-                    UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Advanced, PosEnemigo); // Dron Híbrido Forzado
-            }
-            else if (NivelActual == 9)
-            {
+                FVector PosEnemigo = UbicacionBase + FVector(FMath::RandRange(-2000.f, 2000.f), FMath::RandRange(-1800.f, 1800.f), FMath::RandRange(-1000.f, 1000.f));
                 if (i % 2 == 0)
                     UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Hunter, PosEnemigo);
                 else
                     UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Sentry, PosEnemigo);
             }
-            else if (NivelActual == 10 || NivelActual == 11)
+        }
+        else if (NivelActual == 10)
+        {
+            // Nivel 10: horda de Drones Suicidas (sin jefe)
+            int32 Escoltas = 3 + (NivelActual - 1);
+            NumEnemigos = Escoltas + 5;
+            for (int32 i = 0; i < NumEnemigos; i++)
             {
-                // En los niveles imposibles, la última horda son puros Drones Híbridos
-                UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Advanced, PosEnemigo);
+                FVector PosEnemigo = UbicacionBase + FVector(FMath::RandRange(-2000.f, 2000.f), FMath::RandRange(-1800.f, 1800.f), FMath::RandRange(-1000.f, 1000.f));
+                GetWorld()->SpawnActor<ADronSuicida>(ADronSuicida::StaticClass(), PosEnemigo, FRotator::ZeroRotator);
             }
-            else
+        }
+        else if (NivelActual == 11)
+        {
+            // Nivel 11: horda de Naves Elite (sin jefe)
+            int32 Escoltas = 3 + (NivelActual - 1);
+            NumEnemigos = Escoltas + 5;
+            for (int32 i = 0; i < NumEnemigos; i++)
             {
+                FVector PosEnemigo = UbicacionBase + FVector(FMath::RandRange(-2000.f, 2000.f), FMath::RandRange(-1800.f, 1800.f), FMath::RandRange(-1000.f, 1000.f));
+                GetWorld()->SpawnActor<ANaveElite>(ANaveElite::StaticClass(), PosEnemigo, FRotator::ZeroRotator);
+            }
+        }
+        else // Niveles 1-8: fase final sin jefe (solo enemigos normales)
+        {
+            int32 Escoltas = 3 + (NivelActual - 1);
+            NumEnemigos = Escoltas;
+            for (int32 i = 0; i < NumEnemigos; i++)
+            {
+                FVector PosEnemigo = UbicacionBase + FVector(FMath::RandRange(-2000.f, 2000.f), FMath::RandRange(-1800.f, 1800.f), FMath::RandRange(-1000.f, 1000.f));
                 if (FabricaDeFase)
                 {
-                    FabricaDeFase->CrearEnemigo(GetWorld(), PosEnemigo);
+                    AActor* Enemigo = FabricaDeFase->CrearEnemigo(GetWorld(), PosEnemigo);
+                    if (!Enemigo)
+                        UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Sentry, PosEnemigo);
                 }
                 else
                 {
@@ -118,20 +152,21 @@ void ALevelBuilder::GenerarFaseObjetivo()
             }
         }
     }
-    else
+    else // Fases normales (sin jefe)
     {
-        // --- SECTORES INTERMEDIOS / NORMALES ---
         int32 BaseEnemigos = 3 + FaseActualMision + (NivelActual / 2);
         NumEnemigos = BaseEnemigos;
-
         for (int32 i = 0; i < NumEnemigos; i++)
         {
             FVector PosEnemigo = UbicacionBase + FVector(FMath::RandRange(-1500.f, 1500.f), FMath::RandRange(-1500.f, 1500.f), FMath::RandRange(-800.f, 800.f));
 
-            // Si estamos en la recta final imposible, forzamos directamente que los enemigos comunes sean los avanzados
-            if (NivelActual >= 10)
+            if (NivelActual == 10)
             {
-                UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Advanced, PosEnemigo);
+                GetWorld()->SpawnActor<ADronSuicida>(ADronSuicida::StaticClass(), PosEnemigo, FRotator::ZeroRotator);
+            }
+            else if (NivelActual == 11)
+            {
+                GetWorld()->SpawnActor<ANaveElite>(ANaveElite::StaticClass(), PosEnemigo, FRotator::ZeroRotator);
             }
             else
             {
@@ -203,19 +238,36 @@ void ALevelBuilder::GeneracionContinua()
 
 void ALevelBuilder::NotificarMuerteEnemigo()
 {
+    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
+    int32 NivelActual = GM ? GM->GetNivelActual() : 1;
+
     if (EnemigosVivosEnSector > 0)
     {
         EnemigosVivosEnSector--;
         if (EnemigosVivosEnSector == 0)
         {
-            if (bJefeAparecido && !bJefeDerrotado)
+            // Comportamiento especial para nivel 12: solo núcleo cuando TODOS los enemigos (jefe+escoltas) han muerto
+            if (NivelActual == 12)
             {
-                bJefeDerrotado = true;
-                SpawnNucleo();
+                if (bJefeAparecido && !bJefeDerrotado)
+                {
+                    bJefeDerrotado = true;
+                    SpawnNucleo(); // Único núcleo al final
+                }
+                return;
             }
-            else if (!bJefeAparecido)
+            // Comportamiento normal para otros niveles
+            else
             {
-                SpawnNucleo();
+                if (bJefeAparecido && !bJefeDerrotado)
+                {
+                    bJefeDerrotado = true;
+                    SpawnNucleo();
+                }
+                else if (!bJefeAparecido)
+                {
+                    SpawnNucleo();
+                }
             }
         }
     }

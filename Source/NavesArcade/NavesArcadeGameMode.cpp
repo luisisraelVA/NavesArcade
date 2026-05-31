@@ -15,7 +15,6 @@
 #include "FaseAvanzadaFab.h"
 #include "AsteroideFractal.h"
 
-
 ANavesArcadeGameMode::ANavesArcadeGameMode()
 {
     DefaultPawnClass = ANaveJugador::StaticClass();
@@ -28,12 +27,10 @@ void ANavesArcadeGameMode::BeginPlay()
 {
     Super::BeginPlay();
 
-    // 1. Inicializar las fábricas de fases abstractas
     FabricaFaseUno = NewObject<UFaseUnoFab>(this);
     FabricaFaseFinal = NewObject<UFaseFinalFab>(this);
     FabricaFaseAvanzada = NewObject<UFaseAvanzadaFab>(this);
 
-    // 2. Spawnear las instancias del Builder y del Director de Niveles
     FVector PosicionBuilder = FVector(1500.0f, 0.0f, 0.0f);
     InstanciaBuilder = GetWorld()->SpawnActor<ALevelBuilder>(ALevelBuilder::StaticClass(), PosicionBuilder, FRotator::ZeroRotator);
     InstanciaDirector = GetWorld()->SpawnActor<ALevelDirector>(ALevelDirector::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator);
@@ -43,8 +40,6 @@ void ANavesArcadeGameMode::BeginPlay()
         InstanciaDirector->SetBuilder(InstanciaBuilder);
         InstanciaDirector->SetDificultad(DificultadActual);
 
-        // --- EXTRACCIÓN DINÁMICA DEL NIVEL ---
-        // Extrae automáticamente el número final del mapa (Ej: "Nivel-07" -> 7)
         FString NombreMapa = GetWorld()->GetMapName();
         NombreMapa.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
 
@@ -58,7 +53,6 @@ void ANavesArcadeGameMode::BeginPlay()
             NivelActual = 1;
         }
 
-        // 3. Configurar reglas y cargar la receta correspondiente
         ActualizarRequerimientoPorNivel();
         CargarRecetaNivel(NivelActual);
     }
@@ -66,34 +60,36 @@ void ANavesArcadeGameMode::BeginPlay()
 
 void ANavesArcadeGameMode::ActualizarRequerimientoPorNivel()
 {
-    if (NivelActual <= 2)          NucleosRequeridos = 3;
-    else if (NivelActual <= 4)     NucleosRequeridos = 4;
-    else if (NivelActual <= 6)     NucleosRequeridos = 5;
-    else if (NivelActual <= 9)     NucleosRequeridos = 6;   // Niveles 7,8,9 difíciles
-    else                           NucleosRequeridos = 7;   // Niveles 10,11,12 súper difíciles
+    if (NivelActual <= 2)          NucleosRequeridos = 1;
+    else if (NivelActual <= 4)     NucleosRequeridos = 1;
+    else if (NivelActual <= 6)     NucleosRequeridos = 1;
+    else if (NivelActual <= 9)     NucleosRequeridos = 1;
+    else if (NivelActual == 12)    NucleosRequeridos = 1;
+    else                           NucleosRequeridos = 1;
 }
 
 void ANavesArcadeGameMode::CargarRecetaNivel(int32 NumeroNivel)
 {
     if (!InstanciaBuilder || !InstanciaDirector) return;
 
-    // ... (El bloque de asignar fábrica de enemigos se mantiene igual) ...
+    if (NumeroNivel <= 3)
+        InstanciaBuilder->SetFabrica(FabricaFaseUno);
+    else if (NumeroNivel <= 6)
+        InstanciaBuilder->SetFabrica(FabricaFaseFinal);
+    else
+        InstanciaBuilder->SetFabrica(FabricaFaseAvanzada);
 
-    // --- CORREGIDO: ASIGNAR TIPO DE ASTEROIDE PARA CURVA IMPOSIBLE ---
     if (NumeroNivel == 1)
         InstanciaBuilder->SetClaseAsteroide(AAsteroideDinamico::StaticClass());
     else if (NumeroNivel == 2)
         InstanciaBuilder->SetClaseAsteroide(AAsteroideErratico::StaticClass());
     else if (NumeroNivel == 8 || NumeroNivel == 10 || NumeroNivel == 11)
-        // Los niveles 10 y 11 ahora heredarán la pesadilla de la multiplicación fractal a velocidades extremas
         InstanciaBuilder->SetClaseAsteroide(AAsteroideFractal::StaticClass());
     else if (NumeroNivel == 9 || NumeroNivel == 12)
-        // Los asteroides de daño masivo (50.0f) se quedan resguardados para los niveles de jefes (9 y 12)
         InstanciaBuilder->SetClaseAsteroide(AAsteroideExplosivo::StaticClass());
     else
         InstanciaBuilder->SetClaseAsteroide(AAsteroideDinamico::StaticClass());
 
-    // --- CONSTRUIR EL NIVEL CON EL DIRECTOR ---
     switch (NumeroNivel)
     {
     case 1:  InstanciaDirector->ConstruirNivel1();  break;
@@ -117,10 +113,15 @@ void ANavesArcadeGameMode::AvanzarSiguienteNivel()
     int32 ProximoNivel = NivelActual + 1;
     if (ProximoNivel > NUMERO_TOTAL_NIVELES)
     {
+        bJuegoCompletado = true;
         if (GEngine)
             GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, TEXT("¡VICTORIA! Has completado todos los niveles."));
-        // Aquí puedes abrir un nivel de créditos o menú principal
-        // UGameplayStatics::OpenLevel(GetWorld(), "MenuPrincipal");
+
+        // Desactivar el control del jugador para que no pueda moverse
+        APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+        if (PC)
+            PC->DisableInput(PC);
+
         return;
     }
 

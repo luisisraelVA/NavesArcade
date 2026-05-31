@@ -11,6 +11,8 @@
 #include "NaveNodriza.h" 
 #include "NaveJugador.h"
 #include "DronHibridoAvanzado.h"
+#include "DronSuicida.h"   // + Añadir
+#include "NaveElite.h"
 
 AProyectil::AProyectil()
 {
@@ -61,6 +63,7 @@ void AProyectil::AlSuperponerse(UPrimitiveComponent* OverlappedComponent, AActor
 
     if (bDisparadoPorJugador)
     {
+        // Daño al jefe
         if (OtherActor->IsA(ANaveNodriza::StaticClass()))
         {
             ANaveNodriza* Boss = Cast<ANaveNodriza>(OtherActor);
@@ -69,19 +72,35 @@ void AProyectil::AlSuperponerse(UPrimitiveComponent* OverlappedComponent, AActor
             return;
         }
 
+        // Daño a asteroides y enemigos normales (incluye los nuevos)
         if (OtherActor->IsA(AAsteroideBase::StaticClass()) ||
             OtherActor->IsA(ADronCentinela::StaticClass()) ||
             OtherActor->IsA(ANaveAcechadora::StaticClass()) ||
-            OtherActor->IsA(ADronHibridoAvanzado::StaticClass()))
+            OtherActor->IsA(ADronHibridoAvanzado::StaticClass()) ||
+            OtherActor->IsA(ADronSuicida::StaticClass()) ||     // + DronSuicida
+            OtherActor->IsA(ANaveElite::StaticClass()))         // + NaveElite
         {
             if (EfectoExplosion) UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EfectoExplosion, OtherActor->GetActorLocation());
             ANaveJugador* Jugador = Cast<ANaveJugador>(GetOwner());
             if (Jugador) Jugador->SumarPuntos(100);
-            OtherActor->Destroy();
+
+            // Manejo específico por tipo
+            if (ANaveElite* Elite = Cast<ANaveElite>(OtherActor))
+            {
+                Elite->RecibirDano(10.0f);
+            }
+            else if (ADronSuicida* Suicida = Cast<ADronSuicida>(OtherActor))
+            {
+                Suicida->RecibirDano(10.0f);
+            }
+            else
+            {
+                OtherActor->Destroy();
+            }
             Destroy();
         }
     }
-    else
+    else // Disparo enemigo
     {
         ANaveJugador* Jugador = Cast<ANaveJugador>(OtherActor);
         if (Jugador)

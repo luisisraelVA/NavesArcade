@@ -29,6 +29,9 @@ public:
     int32 GetNucleosRequeridos() const { return NucleosRequeridos; }
     void ActualizarRequerimientoPorNivel();
 
+    // Variable para saber si el juego ha terminado (victoria)
+    bool bJuegoCompletado = false;
+
 protected:
     virtual void BeginPlay() override;
 
@@ -53,7 +56,7 @@ private:
 
     void CargarRecetaNivel(int32 NumeroNivel);
     void LimpiarMapa();
-    // En NavesArcadeGameMode.h, dentro de la clase ANavesArcadeGameMode
+
 private:
     static constexpr int32 NUMERO_TOTAL_NIVELES = 12;
 

@@ -26,7 +26,7 @@ ADronHibridoAvanzado::ADronHibridoAvanzado()
     if (MeshAsset.Succeeded())
     {
         MallaDron->SetStaticMesh(MeshAsset.Object);
-        MallaDron->SetRelativeScale3D(FVector(1.2f, 1.2f, 1.2f));
+        MallaDron->SetRelativeScale3D(FVector(1.2f, 1.2f, 1.0f));
     }
 
     Tags.Add(FName("Enemy"));

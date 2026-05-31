@@ -1,3 +1,4 @@
+#pragma warning(disable: 4800)
 #include "DodgerHUD.h"
 #include "Engine/Canvas.h"
 #include "NaveJugador.h"
@@ -8,13 +9,19 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Pawn.h"
 
-ADodgerHUD::ADodgerHUD()
+ADodgerHUD::ADodgerHUD() : FuentePrincipal(nullptr)
 {
     static ConstructorHelpers::FObjectFinder<UFont> FontObj(TEXT("/Engine/EngineFonts/RobotoDistanceField"));
-    if (FontObj.Succeeded()) FuentePrincipal = FontObj.Object;
+    if (FontObj.Succeeded())
+    {
+        FuentePrincipal = FontObj.Object;
+    }
 }
 
-void ADodgerHUD::BeginPlay() { Super::BeginPlay(); }
+void ADodgerHUD::BeginPlay()
+{
+    Super::BeginPlay();
+}
 
 void ADodgerHUD::DrawHUD()
 {
@@ -25,10 +32,47 @@ void ADodgerHUD::DrawHUD()
     APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
     ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
 
-    if (!MiNave || !Canvas || !FuentePrincipal || !PC || !GM) return;
+    if (!MiNave || !Canvas || !FuentePrincipal || !PC || !GM)
+    {
+        return;
+    }
 
+    // Pantalla de victoria
+    if (GM->bJuegoCompletado)
+    {
+        float AnchoPantalla = Canvas->SizeX;
+        float AltoPantalla = Canvas->SizeY;
+        float CX = AnchoPantalla / 2.0f;
+        float CY = AltoPantalla / 2.0f;
+
+        DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.85f), 0.0f, 0.0f, AnchoPantalla, AltoPantalla);
+
+        FString Mensaje = TEXT("¡VICTORIA!");
+        float TextoAncho, TextoAlto;
+        Canvas->StrLen(FuentePrincipal, Mensaje, TextoAncho, TextoAlto, 3.5f);
+        DrawText(Mensaje, FLinearColor::Yellow, CX - TextoAncho * 0.5f, CY - 100.0f, FuentePrincipal, 3.5f);
+
+        FString Sub = TEXT("HAS COMPLETADO TODOS LOS NIVELES");
+        Canvas->StrLen(FuentePrincipal, Sub, TextoAncho, TextoAlto, 1.5f);
+        DrawText(Sub, FLinearColor::White, CX - TextoAncho * 0.5f, CY - 20.0f, FuentePrincipal, 1.5f);
+
+        FString PuntosText = FString::Printf(TEXT("PUNTUACIÓN FINAL: %d"), MiNave->GetPuntuacion());
+        Canvas->StrLen(FuentePrincipal, PuntosText, TextoAncho, TextoAlto, 1.2f);
+        DrawText(PuntosText, FLinearColor::Green, CX - TextoAncho * 0.5f, CY + 60.0f, FuentePrincipal, 1.2f);
+
+        FString ExitMsg = TEXT("Presiona ESC para salir");
+        Canvas->StrLen(FuentePrincipal, ExitMsg, TextoAncho, TextoAlto, 1.0f);
+        DrawText(ExitMsg, FLinearColor::Gray, CX - TextoAncho * 0.5f, CY + 130.0f, FuentePrincipal, 1.0f);
+
+        return;
+    }
+
+    // HUD normal
     UNaveFacade* Facade = MiNave->FindComponentByClass<UNaveFacade>();
-    if (!Facade) return;
+    if (!Facade)
+    {
+        return;
+    }
 
     float VidaReal = Facade->ObtenerVidaNave();
     int32 VidasRestantes = MiNave->GetVidas();
@@ -38,7 +82,6 @@ void ADodgerHUD::DrawHUD()
     float AnchoPantalla = Canvas->SizeX;
     float AltoPantalla = Canvas->SizeY;
 
-    // Obtener nivel actual
     FString NombreMapa = GetWorld()->GetMapName();
     NombreMapa.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
     int32 NivelActual = 0;
@@ -48,36 +91,36 @@ void ADodgerHUD::DrawHUD()
         NivelActual = FCString::Atoi(*NumStr);
     }
 
-
-    if (VidasRestantes > 0 && VidaReal > 0)
+    // Condición con comparación explícita
+    if ((VidasRestantes > 0) && (VidaReal > 0.0f))
     {
-        // --- PANEL PRINCIPAL ---
+        // Panel principal
         DrawRect(FLinearColor(0.0f, 0.0f, 0.05f, 0.7f), 20.0f, 20.0f, 400.0f, 160.0f);
-        DrawText(FString::Printf(TEXT("VIDAS: %d"), VidasRestantes), FLinearColor::White, 40.f, 30.f, FuentePrincipal, 1.2f);
-        DrawText(FString::Printf(TEXT("NIVEL: %d"), NivelActual), FLinearColor::White, 40.f, 55.f, FuentePrincipal, 1.2f);
+        DrawText(FString::Printf(TEXT("VIDAS: %d"), VidasRestantes), FLinearColor::White, 40.0f, 30.0f, FuentePrincipal, 1.2f);
+        DrawText(FString::Printf(TEXT("NIVEL: %d"), NivelActual), FLinearColor::White, 40.0f, 55.0f, FuentePrincipal, 1.2f);
 
         int32 NucleosReq = GM ? GM->GetNucleosRequeridos() : 3;
-        DrawText(FString::Printf(TEXT("NUCLEOS: %d / %d"), Recolectados, NucleosReq), FLinearColor(0.0f, 1.0f, 1.0f), 40.f, 80.f, FuentePrincipal, 1.2f);
+        DrawText(FString::Printf(TEXT("NUCLEOS: %d / %d"), Recolectados, NucleosReq), FLinearColor(0.0f, 1.0f, 1.0f), 40.0f, 80.0f, FuentePrincipal, 1.2f);
 
-        DrawText(TEXT("INTEGRIDAD:"), FLinearColor::White, 40.f, 120.f, FuentePrincipal, 1.2f);
-        FLinearColor ColorVida = VidaReal > 50 ? FLinearColor::Green : (VidaReal > 25 ? FLinearColor::Yellow : FLinearColor::Red);
+        DrawText(TEXT("INTEGRIDAD:"), FLinearColor::White, 40.0f, 120.0f, FuentePrincipal, 1.2f);
+        FLinearColor ColorVida = (VidaReal > 50.0f) ? FLinearColor::Green : ((VidaReal > 25.0f) ? FLinearColor::Yellow : FLinearColor::Red);
         DrawRect(FLinearColor(0.1f, 0.0f, 0.0f, 0.8f), 190.0f, 125.0f, 200.0f, 15.0f);
         DrawRect(ColorVida, 190.0f, 125.0f, (VidaReal / 100.0f) * 200.0f, 15.0f);
 
-        // --- PUNTUACIÓN Y COMBO ---
+        // Puntuación y combo
         DrawRect(FLinearColor(0.0f, 0.0f, 0.05f, 0.7f), AnchoPantalla - 320.0f, 20.0f, 300.0f, 100.0f);
         DrawText(FString::Printf(TEXT("SCORE: %d"), Puntos), FLinearColor::Yellow, AnchoPantalla - 300.0f, 30.0f, FuentePrincipal, 1.5f);
         FLinearColor ColorCombo = (Combo > 1.5f) ? FLinearColor(1.0f, 0.5f, 0.0f) : FLinearColor::White;
         DrawText(FString::Printf(TEXT("COMBO: x%.1f"), Combo), ColorCombo, AnchoPantalla - 300.0f, 75.0f, FuentePrincipal, 1.1f);
 
-        // --- EFECTO VIDA BAJA ---
+        // Efecto vida baja
         if (VidaReal <= 25.0f)
         {
             float Alpha = FMath::Abs(FMath::Sin(GetWorld()->GetTimeSeconds() * 5.0f)) * 0.3f;
             DrawRect(FLinearColor(1.0f, 0.0f, 0.0f, Alpha), 0.0f, 0.0f, AnchoPantalla, AltoPantalla);
         }
 
-        // --- PORTAL ---
+        // Portal
         if (Recolectados >= NucleosReq)
         {
             AActor* Portal = UGameplayStatics::GetActorOfClass(GetWorld(), APortalSalto::StaticClass());
@@ -98,7 +141,7 @@ void ADodgerHUD::DrawHUD()
             }
         }
 
-        // --- NÚCLEOS ---
+        // Núcleos
         TArray<AActor*> Nucleos;
         UGameplayStatics::GetAllActorsOfClass(GetWorld(), ANucleoEnergia::StaticClass(), Nucleos);
         for (AActor* Nuc : Nucleos)
@@ -117,8 +160,8 @@ void ADodgerHUD::DrawHUD()
             }
         }
 
-        // --- OPTIMIZADO: LEER ENEMIGOS DIRECTOS DEL GAMEMODE ---
-        DrawText(FString::Printf(TEXT("ENEMIGOS: %d"), GM->EnemigosActivos.Num()), FLinearColor::Yellow, 40.f, 190.f, FuentePrincipal, 1.2f);
+        // Enemigos activos
+        DrawText(FString::Printf(TEXT("ENEMIGOS: %d"), GM->EnemigosActivos.Num()), FLinearColor::Yellow, 40.0f, 190.0f, FuentePrincipal, 1.2f);
 
         for (AActor* Enemigo : GM->EnemigosActivos)
         {
@@ -139,10 +182,10 @@ void ADodgerHUD::DrawHUD()
                 Y = AltoPantalla / 2.0f;
             }
 
-            DrawLine(X - 15, Y - 15, X + 15, Y - 15, FLinearColor::Red, 2.5f);
-            DrawLine(X - 15, Y + 15, X + 15, Y + 15, FLinearColor::Red, 2.5f);
-            DrawLine(X - 15, Y - 15, X - 15, Y + 15, FLinearColor::Red, 2.5f);
-            DrawLine(X + 15, Y - 15, X + 15, Y + 15, FLinearColor::Red, 2.5f);
+            DrawLine(X - 15.0f, Y - 15.0f, X + 15.0f, Y - 15.0f, FLinearColor::Red, 2.5f);
+            DrawLine(X - 15.0f, Y + 15.0f, X + 15.0f, Y + 15.0f, FLinearColor::Red, 2.5f);
+            DrawLine(X - 15.0f, Y - 15.0f, X - 15.0f, Y + 15.0f, FLinearColor::Red, 2.5f);
+            DrawLine(X + 15.0f, Y - 15.0f, X + 15.0f, Y + 15.0f, FLinearColor::Red, 2.5f);
 
             FString NombreClase = Enemigo->GetClass()->GetName();
             NombreClase.RemoveFromEnd("_C");
@@ -152,10 +195,9 @@ void ADodgerHUD::DrawHUD()
             DrawText(DistText, FLinearColor::Red, X - 20.0f, Y + 20.0f, FuentePrincipal, 0.8f);
         }
     }
-    else if (VidaReal <= 0.0f && VidasRestantes > 0)
+    else if ((VidaReal <= 0.0f) && (VidasRestantes > 0))
     {
-        //DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.6f), 0.0f, 0.0f, AnchoPantalla, AltoPantalla);
-        //DrawText(TEXT("RECONSTRUYENDO NAVE..."), FLinearColor::Yellow, (AnchoPantalla / 2.0f) - 250.0f, (AltoPantalla / 2.0f) - 50.0f, FuentePrincipal, 2.5f);
+        // Mensaje de reconstrucción (comentado)
     }
     else if (VidasRestantes <= 0)
     {

@@ -15,6 +15,7 @@ class ANavesArcadeGameMode : public AGameModeBase
 {
     GENERATED_BODY()
 
+
 public:
     ANavesArcadeGameMode();
 
@@ -23,6 +24,8 @@ public:
     // Dificultad global (Fácil, Medio, Difícil)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dificultad")
     EDificultad DificultadActual = EDificultad::Medio;
+
+
 
     // Nivel actual (1..6)
     int32 GetNivelActual() const { return NivelActual; }

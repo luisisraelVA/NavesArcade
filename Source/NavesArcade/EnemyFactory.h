@@ -7,10 +7,12 @@
 UENUM(BlueprintType)
 enum class EEnemyType : uint8
 {
-    Sentry      UMETA(DisplayName = "Dron Centinela"),
-    Hunter      UMETA(DisplayName = "Nave Acechadora"),
-    Boss        UMETA(DisplayName = "Nave Nodriza"),
-    Advanced    UMETA(DisplayName = "Dron Hibrido Avanzado") // <-- Añadido para el Dron Híbrido
+    Sentry      UMETA(DisplayName = "Sentry"),
+    Hunter      UMETA(DisplayName = "Hunter"),
+    Boss        UMETA(DisplayName = "Boss"),
+    Hybrid      UMETA(DisplayName = "Hybrid"),
+    Suicide     UMETA(DisplayName = "Suicide"),
+    Elite       UMETA(DisplayName = "Elite")      
 };
 
 UCLASS()

@@ -6,6 +6,7 @@
 #include "AsteroideDinamico.h"
 #include "AsteroideErratico.h"
 #include "AsteroideExplosivo.h"
+#include "AsteroideFractal.h"
 #include "NucleoEnergia.h"
 #include "PortalSalto.h"
 #include "LevelBuilder.h"
@@ -13,7 +14,7 @@
 #include "FaseUnoFab.h"
 #include "FaseFinalFab.h"
 #include "FaseAvanzadaFab.h"
-#include "AsteroideFractal.h"
+
 
 ANavesArcadeGameMode::ANavesArcadeGameMode()
 {
@@ -42,10 +43,9 @@ void ANavesArcadeGameMode::BeginPlay()
 
         FString NombreMapa = GetWorld()->GetMapName();
         NombreMapa.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
-
         if (NombreMapa.StartsWith("Nivel-"))
         {
-            FString NumStr = NombreMapa.Right(2);
+            FString NumStr = NombreMapa.RightChop(6);
             NivelActual = FCString::Atoi(*NumStr);
         }
         else
@@ -60,18 +60,18 @@ void ANavesArcadeGameMode::BeginPlay()
 
 void ANavesArcadeGameMode::ActualizarRequerimientoPorNivel()
 {
-    if (NivelActual <= 2)          NucleosRequeridos = 1;
-    else if (NivelActual <= 4)     NucleosRequeridos = 1;
-    else if (NivelActual <= 6)     NucleosRequeridos = 1;
-    else if (NivelActual <= 9)     NucleosRequeridos = 1;
-    else if (NivelActual == 12)    NucleosRequeridos = 1;
-    else                           NucleosRequeridos = 1;
+    if (NivelActual <= 2) NucleosRequeridos = 3;
+    else if (NivelActual <= 4) NucleosRequeridos = 4;
+    else if (NivelActual <= 6) NucleosRequeridos = 5;
+    else if (NivelActual <= 9) NucleosRequeridos = 6;
+    else NucleosRequeridos = 7;
 }
 
 void ANavesArcadeGameMode::CargarRecetaNivel(int32 NumeroNivel)
 {
     if (!InstanciaBuilder || !InstanciaDirector) return;
 
+    // Fábrica de enemigos según rango de niveles
     if (NumeroNivel <= 3)
         InstanciaBuilder->SetFabrica(FabricaFaseUno);
     else if (NumeroNivel <= 6)
@@ -79,54 +79,42 @@ void ANavesArcadeGameMode::CargarRecetaNivel(int32 NumeroNivel)
     else
         InstanciaBuilder->SetFabrica(FabricaFaseAvanzada);
 
-    if (NumeroNivel == 1)
+    // Tipo de asteroide
+    if (NumeroNivel == 1 || NumeroNivel == 7)
         InstanciaBuilder->SetClaseAsteroide(AAsteroideDinamico::StaticClass());
-    else if (NumeroNivel == 2)
+    else if (NumeroNivel == 2 || NumeroNivel == 8)
         InstanciaBuilder->SetClaseAsteroide(AAsteroideErratico::StaticClass());
-    else if (NumeroNivel == 8 || NumeroNivel == 10 || NumeroNivel == 11)
-        InstanciaBuilder->SetClaseAsteroide(AAsteroideFractal::StaticClass());
-    else if (NumeroNivel == 9 || NumeroNivel == 12)
+    else if (NumeroNivel == 3 || NumeroNivel == 9)
         InstanciaBuilder->SetClaseAsteroide(AAsteroideExplosivo::StaticClass());
     else
-        InstanciaBuilder->SetClaseAsteroide(AAsteroideDinamico::StaticClass());
+        InstanciaBuilder->SetClaseAsteroide(AAsteroideFractal::StaticClass());
 
     switch (NumeroNivel)
     {
-    case 1:  InstanciaDirector->ConstruirNivel1();  break;
-    case 2:  InstanciaDirector->ConstruirNivel2();  break;
-    case 3:  InstanciaDirector->ConstruirNivel3();  break;
-    case 4:  InstanciaDirector->ConstruirNivel4();  break;
-    case 5:  InstanciaDirector->ConstruirNivel5();  break;
-    case 6:  InstanciaDirector->ConstruirNivel6();  break;
-    case 7:  InstanciaDirector->ConstruirNivel7();  break;
-    case 8:  InstanciaDirector->ConstruirNivel8();  break;
-    case 9:  InstanciaDirector->ConstruirNivel9();  break;
+    case 1: InstanciaDirector->ConstruirNivel1(); break;
+    case 2: InstanciaDirector->ConstruirNivel2(); break;
+    case 3: InstanciaDirector->ConstruirNivel3(); break;
+    case 4: InstanciaDirector->ConstruirNivel4(); break;
+    case 5: InstanciaDirector->ConstruirNivel5(); break;
+    case 6: InstanciaDirector->ConstruirNivel6(); break;
+    case 7: InstanciaDirector->ConstruirNivel7(); break;
+    case 8: InstanciaDirector->ConstruirNivel8(); break;
+    case 9: InstanciaDirector->ConstruirNivel9(); break;
     case 10: InstanciaDirector->ConstruirNivel10(); break;
     case 11: InstanciaDirector->ConstruirNivel11(); break;
     case 12: InstanciaDirector->ConstruirNivel12(); break;
-    default: InstanciaDirector->ConstruirNivel1();  break;
+    default: InstanciaDirector->ConstruirNivel1(); break;
     }
 }
 
 void ANavesArcadeGameMode::AvanzarSiguienteNivel()
 {
     int32 ProximoNivel = NivelActual + 1;
-    if (ProximoNivel > NUMERO_TOTAL_NIVELES)
-    {
-        bJuegoCompletado = true;
-        if (GEngine)
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, TEXT("¡VICTORIA! Has completado todos los niveles."));
-
-        // Desactivar el control del jugador para que no pueda moverse
-        APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-        if (PC)
-            PC->DisableInput(PC);
-
-        return;
-    }
-
+    if (ProximoNivel > 12) ProximoNivel = 1;   // Reinicia al 1 (o muestra final)
     FString NombreSiguienteNivel = FString::Printf(TEXT("Nivel-%02d"), ProximoNivel);
-    UGameplayStatics::OpenLevel(GetWorld(), FName(*NombreSiguienteNivel));
+    FName NivelSiguiente = FName(*NombreSiguienteNivel);
+    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Loading %s..."), *NombreSiguienteNivel));
+    UGameplayStatics::OpenLevel(GetWorld(), NivelSiguiente);
 }
 
 void ANavesArcadeGameMode::LimpiarMapa()

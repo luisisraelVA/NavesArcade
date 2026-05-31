@@ -1,38 +1,44 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "GameFramework/Pawn.h"
 #include "DronSuicida.generated.h"
 
 UCLASS()
-class NAVESARCADE_API ADronSuicida : public AActor
+class NAVESARCADE_API ADronSuicida : public APawn
 {
     GENERATED_BODY()
 
 public:
     ADronSuicida();
-
+    void RecibirDano(float Cantidad);
 protected:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
     virtual void Destroyed() override;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes")
+    UPROPERTY(VisibleAnywhere, Category = "Components")
+    class USphereComponent* EsferaColision;
+
+    UPROPERTY(VisibleAnywhere, Category = "Components")
     class UStaticMeshComponent* Malla;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes")
-    class USphereComponent* ColisionDano;  // Para daño por contacto (opcional)
+    UPROPERTY(EditAnywhere, Category = "AI")
+    float VelocidadCarga = 700.0f;
 
-    UPROPERTY(EditAnywhere, Category = "Combate")
-    float CadenciaDisparo;   // Segundos entre disparos
+    UPROPERTY(EditAnywhere, Category = "AI")
+    float DistanciaDeteccion = 2000.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Damage")
+    float DanoExplosion = 50.0f;
 
     UPROPERTY()
-    class APawn* Jugador;
+    class APawn* Objetivo;
 
-    FTimerHandle TimerDisparo;
+    bool bActivado = false;
 
-    void Disparar();
-
-public:
-    void RecibirDano(float Cantidad);  // Para que muera con disparos
+    UFUNCTION()
+    void AlImpactar(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+        UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+        const FHitResult& SweepResult);
 };

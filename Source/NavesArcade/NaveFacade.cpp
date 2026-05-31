@@ -1,7 +1,6 @@
 #include "NaveFacade.h"
 #include "NaveJugador.h"
 #include "InventoryComponent.h"
-#include "WeaponSystem.h"
 #include "AudioManager.h"
 #include "Proyectil.h"
 #include "Engine/World.h"
@@ -20,7 +19,6 @@ void UNaveFacade::BeginPlay()
     if (NaveDuenia)
     {
         Inventario = NaveDuenia->FindComponentByClass<UInventoryComponent>();
-        SistemaArmas = NaveDuenia->FindComponentByClass<UWeaponSystem>();
     }
 }
 

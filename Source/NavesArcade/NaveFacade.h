@@ -8,7 +8,6 @@
 
 class ANaveJugador;
 class UInventoryComponent;
-class UWeaponSystem;
 class UAudioManager;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
@@ -28,8 +27,6 @@ protected:
     UPROPERTY()
     UInventoryComponent* Inventario;
 
-    UPROPERTY()
-    UWeaponSystem* SistemaArmas;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio", meta = (AllowPrivateAccess = "true"))
     UAudioManager* AudioManager;

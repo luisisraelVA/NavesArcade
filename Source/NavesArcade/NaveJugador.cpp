@@ -4,7 +4,6 @@
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "InventoryComponent.h"
-#include "WeaponSystem.h" // Incluimos el header para acceder a sus funciones
 #include "NaveFacade.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/World.h"
@@ -40,8 +39,6 @@ ANaveJugador::ANaveJugador()
     Inventario = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventario"));
     FachadaNave = CreateDefaultSubobject<UNaveFacade>(TEXT("FachadaNave"));
 
-    // CORREGIDO: Inicialización real de la variable del componente de armas
-    SistemaArmas = CreateDefaultSubobject<UWeaponSystem>(TEXT("SistemaArmas"));
 
     IntegridadEstructural = 100.0f;
     VelocidadMovimiento = 1000.0f;
@@ -172,6 +169,7 @@ void ANaveJugador::RecolectarEnergia(float Cantidad)
 {
     NucleosRecolectados++;
     EnergiaActual = (float)NucleosRecolectados;
+    if (Inventario) Inventario->AgregarEnergia(1.0f);   // ← AÑADIR ESTA LÍNEA
     SumarPuntos(1000);
 
     ANavesArcadeGameMode* GameMode = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());

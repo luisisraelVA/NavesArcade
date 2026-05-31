@@ -31,7 +31,6 @@ public:
     void ConstruirNivel4();
     void ConstruirNivel5();
     void ConstruirNivel6();
-
     void ConstruirNivel7();
     void ConstruirNivel8();
     void ConstruirNivel9();

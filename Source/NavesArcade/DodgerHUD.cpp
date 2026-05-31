@@ -96,7 +96,7 @@ void ADodgerHUD::DrawHUD()
     {
         // Panel principal
         DrawRect(FLinearColor(0.0f, 0.0f, 0.05f, 0.7f), 20.0f, 20.0f, 400.0f, 160.0f);
-        DrawText(FString::Printf(TEXT("VIDAS: %d"), VidasRestantes), FLinearColor::White, 40.0f, 30.0f, FuentePrincipal, 1.2f);
+        DrawText(FString::Printf(TEXT("VIDAS: %d"), VidasRestantes), FLinearColor::White, 40.0f, 30.0f, FuentePrincipal, true);
         DrawText(FString::Printf(TEXT("NIVEL: %d"), NivelActual), FLinearColor::White, 40.0f, 55.0f, FuentePrincipal, 1.2f);
 
         int32 NucleosReq = GM ? GM->GetNucleosRequeridos() : 3;

@@ -22,8 +22,7 @@ protected:
     class UStaticMeshComponent* MallaAsteroide;
 
     UFUNCTION()
-    void AlSuperponerse(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
+    virtual void AlSuperponerse(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Daño")
     float DanoPorChoque;
 

@@ -1,43 +1,35 @@
-// Fill out your copyright notice in the Description page of Project Settings.
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h" // <-- CAMBIADO: Inclusión obligatoria para APawn
+#include "GameFramework/Pawn.h"
 #include "DronHibridoAvanzado.generated.h"
 
 UCLASS()
-class NAVESARCADE_API ADronHibridoAvanzado : public APawn // <-- CAMBIADO: Ahora hereda de APawn
+class NAVESARCADE_API ADronHibridoAvanzado : public APawn
 {
     GENERATED_BODY()
 
 public:
     ADronHibridoAvanzado();
-
+    void RecibirDano(float Cantidad);
 protected:
     virtual void BeginPlay() override;
+    virtual void Tick(float DeltaTime) override;
     virtual void Destroyed() override;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes")
-    class UStaticMeshComponent* MallaDron;
+    UPROPERTY(VisibleAnywhere, Category = "Components")
+    class UStaticMeshComponent* Malla;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movimiento")
-    float VelocidadActual;
+    UPROPERTY(EditAnywhere, Category = "AI")
+    float VelocidadMovimiento = 400.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movimiento")
-    float VelocidadFrenetica;
+    UPROPERTY(EditAnywhere, Category = "AI")
+    float DistanciaDisparo = 1200.0f;
 
     UPROPERTY()
-    AActor* ObjetivoJugador;
+    class APawn* Objetivo;
 
-    FTimerHandle TimerCicloDisparo;
-    FVector DireccionPatrulla;
+    FTimerHandle TimerDisparo;
 
-    void EjecutarDisparoLaser();
-
-    // --- PATRÓN OBSERVER: El método callback que reaccionará al evento ---
-    UFUNCTION()
-    void EscucharAlertaNucleo();
-
-public:
-    virtual void Tick(float DeltaTime) override;
+    void DispararRafaga();
 };

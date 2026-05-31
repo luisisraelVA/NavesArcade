@@ -7,7 +7,6 @@
 class UInventoryComponent;
 class UNaveFacade;
 class AProyectil;
-class UWeaponSystem;
 class UStaticMeshComponent;
 class USpringArmComponent;
 class UCameraComponent;
@@ -80,6 +79,4 @@ private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes", meta = (AllowPrivateAccess = "true"))
     UNaveFacade* FachadaNave;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes", meta = (AllowPrivateAccess = "true"))
-    UWeaponSystem* SistemaArmas;
 };

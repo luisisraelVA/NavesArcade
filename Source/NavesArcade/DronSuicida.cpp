@@ -1,48 +1,42 @@
 #include "DronSuicida.h"
-#include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Proyectil.h"
 #include "NaveJugador.h"
-#include "LevelBuilder.h"
 #include "NavesArcadeGameMode.h"
+#include "LevelBuilder.h"
 
 ADronSuicida::ADronSuicida()
 {
     PrimaryActorTick.bCanEverTick = true;
 
-    Malla = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Malla"));
-    RootComponent = Malla;
-    Malla->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-    Malla->SetGenerateOverlapEvents(true);
+    EsferaColision = CreateDefaultSubobject<USphereComponent>(TEXT("EsferaColision"));
+    RootComponent = EsferaColision;
+    EsferaColision->InitSphereRadius(50.0f);
+    EsferaColision->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+    EsferaColision->SetGenerateOverlapEvents(true);
 
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> ConoMesh(TEXT("StaticMesh'/Game/MESH/hal2_Box001.hal2_Box001'"));
-    if (ConoMesh.Succeeded())
+    Malla = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Malla"));
+    Malla->SetupAttachment(RootComponent);
+    Malla->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMesh(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+    if (SphereMesh.Succeeded())
     {
-        Malla->SetStaticMesh(ConoMesh.Object);
-        Malla->SetRelativeScale3D(FVector(1.5f, 1.5f, 1.5f));
+        Malla->SetStaticMesh(SphereMesh.Object);
+        Malla->SetRelativeScale3D(FVector(0.6f, 0.6f, 0.6f));
     }
 
-    // Colisión para daño por contacto (opcional, si quieres que aún dañe al tocarte)
-    ColisionDano = CreateDefaultSubobject<USphereComponent>(TEXT("ColisionDano"));
-    ColisionDano->SetupAttachment(RootComponent);
-    ColisionDano->InitSphereRadius(150.0f);
-    ColisionDano->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-    ColisionDano->SetGenerateOverlapEvents(true);
-
-    CadenciaDisparo = 1.0f;
     Tags.Add(FName("Enemy"));
 }
 
 void ADronSuicida::BeginPlay()
 {
     Super::BeginPlay();
-    Jugador = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 
-    // Disparo automático cada ciertos segundos
-    GetWorldTimerManager().SetTimer(TimerDisparo, this, &ADronSuicida::Disparar, CadenciaDisparo, true);
+    Objetivo = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+    EsferaColision->OnComponentBeginOverlap.AddDynamic(this, &ADronSuicida::AlImpactar);
 
-    // Registrar para HUD
     ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
     if (GM) GM->RegistrarEnemigo(this);
 }
@@ -50,28 +44,30 @@ void ADronSuicida::BeginPlay()
 void ADronSuicida::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-    if (!Jugador) return;
+    if (!Objetivo) return;
 
-    // Solo rotar hacia el jugador para apuntar (sin movimiento)
-    FVector Direccion = (Jugador->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-    FRotator Rotacion = Direccion.Rotation();
-    SetActorRotation(Rotacion);
+    float Dist = FVector::Dist(GetActorLocation(), Objetivo->GetActorLocation());
+    if (Dist < DistanciaDeteccion || bActivado)
+    {
+        bActivado = true;
+        FVector Dir = (Objetivo->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+        SetActorRotation(Dir.Rotation());
+        AddActorWorldOffset(Dir * VelocidadCarga * DeltaTime);
+    }
 }
 
-void ADronSuicida::Disparar()
+void ADronSuicida::AlImpactar(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+    bool bFromSweep, const FHitResult& SweepResult)
 {
-    if (!Jugador) return;
-    FVector Dir = (Jugador->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-    FVector Origen = GetActorLocation() + Dir * 150.0f;
-    FActorSpawnParameters Params;
-    Params.Owner = this;
-    GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), Origen, Dir.Rotation(), Params);
-}
+    if (!OtherActor || OtherActor == this) return;
 
-void ADronSuicida::RecibirDano(float Cantidad)
-{
-    // Destruir al recibir daño (de los disparos del jugador)
-    Destroy();
+    ANaveJugador* Jugador = Cast<ANaveJugador>(OtherActor);
+    if (Jugador)
+    {
+        Jugador->RecibirDano(DanoExplosion);
+        Destroy();
+    }
 }
 
 void ADronSuicida::Destroyed()
@@ -83,4 +79,9 @@ void ADronSuicida::Destroyed()
     if (Builder) Builder->NotificarMuerteEnemigo();
 
     Super::Destroyed();
+}
+
+void ADronSuicida::RecibirDano(float Cantidad)
+{
+    Destroy();
 }

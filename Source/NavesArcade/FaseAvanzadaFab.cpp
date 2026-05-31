@@ -1,26 +1,28 @@
 #include "FaseAvanzadaFab.h"
 #include "DronHibridoAvanzado.h"
+#include "DronSuicida.h"
 #include "Engine/World.h"
-#include "GameFramework/Pawn.h"
+#include "NaveElite.h"
 
-// CORREGIDO: Se usa el operador '::' en lugar de ':' para resolver el ámbito de la interfaz
 AActor* UFaseAvanzadaFab::CrearEnemigo(UWorld* World, FVector Location)
 {
     if (!World) return nullptr;
 
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-    // Spawneamos el Dron Híbrido Observer
-    AActor* NuevoEnemigo = World->SpawnActor<ADronHibridoAvanzado>(ADronHibridoAvanzado::StaticClass(), Location, FRotator::ZeroRotator, SpawnParams);
+    float Aleatorio = FMath::FRand();   // 0.0 - 1.0
 
-    if (NuevoEnemigo)
+    if (Aleatorio < 0.33f)                                    // 33%
     {
-        if (APawn* EnemigoPawn = Cast<APawn>(NuevoEnemigo))
-        {
-            EnemigoPawn->SpawnDefaultController();
-        }
+        return World->SpawnActor<ANaveElite>(ANaveElite::StaticClass(), Location, FRotator::ZeroRotator, Params);
     }
-
-    return NuevoEnemigo;
+    else if (Aleatorio < 0.66f)                               // 33%
+    {
+        return World->SpawnActor<ADronHibridoAvanzado>(ADronHibridoAvanzado::StaticClass(), Location, FRotator::ZeroRotator, Params);
+    }
+    else                                                       // 34%
+    {
+        return World->SpawnActor<ADronSuicida>(ADronSuicida::StaticClass(), Location, FRotator::ZeroRotator, Params);
+    }
 }

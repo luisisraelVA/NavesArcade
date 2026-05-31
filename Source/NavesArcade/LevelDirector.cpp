@@ -1,6 +1,5 @@
 #include "LevelDirector.h"
 #include "LevelBuilder.h"
-#include "Engine/Engine.h" // <-- CORREGIDO: Inclusión necesaria para usar GEngine sin errores
 
 ALevelDirector::ALevelDirector()
 {
@@ -61,70 +60,104 @@ void ALevelDirector::ConstruirNivel3()
     Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
 }
 
-// Niveles 4,5,6: dificultad media-alta (independiente de la dificultad global)
 void ALevelDirector::ConstruirNivel4()
 {
     if (!Builder) return;
     Builder->SpawnAsteroides(220, 1400.0f);
 }
+
 void ALevelDirector::ConstruirNivel5()
 {
     if (!Builder) return;
     Builder->SpawnAsteroides(260, 1600.0f);
 }
+
 void ALevelDirector::ConstruirNivel6()
 {
     if (!Builder) return;
     Builder->SpawnAsteroides(300, 1800.0f);
 }
 
-// ========== NIVELES 7, 8, 9: DIFICULTAD "DIFÍCIL" (CONTROLADA) ==========
 void ALevelDirector::ConstruirNivel7()
 {
     if (!Builder) return;
-    Builder->SpawnAsteroides(280, 1600.0f); // Bajado para dar una curva suave
+    float VelocidadBase = 2000.0f;
+    int32 CantidadBase = 340;
+    switch (Dificultad)
+    {
+    case EDificultad::Facil:   VelocidadBase = 1600.0f; CantidadBase = 260; break;
+    case EDificultad::Medio:   VelocidadBase = 2000.0f; CantidadBase = 340; break;
+    case EDificultad::Dificil: VelocidadBase = 2400.0f; CantidadBase = 400; break;
+    }
+    Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
 }
 
 void ALevelDirector::ConstruirNivel8()
 {
     if (!Builder) return;
-    Builder->SpawnAsteroides(320, 1900.0f); // Desafiante, pero manejable con fractales
+    float VelocidadBase = 2200.0f;
+    int32 CantidadBase = 380;
+    switch (Dificultad)
+    {
+    case EDificultad::Facil:   VelocidadBase = 1800.0f; CantidadBase = 300; break;
+    case EDificultad::Medio:   VelocidadBase = 2200.0f; CantidadBase = 380; break;
+    case EDificultad::Dificil: VelocidadBase = 2600.0f; CantidadBase = 450; break;
+    }
+    Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
 }
 
 void ALevelDirector::ConstruirNivel9()
 {
     if (!Builder) return;
-    // CORREGIDO: Un solo llamado para evitar que el timer se quede buclado en memoria
-    Builder->SpawnAsteroides(380, 2200.0f);
-
-    if (GEngine)
+    float VelocidadBase = 2400.0f;
+    int32 CantidadBase = 420;
+    switch (Dificultad)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Orange, TEXT("NIVEL 9: EL GRAN CAMINO AL INFIERNO"));
+    case EDificultad::Facil:   VelocidadBase = 2000.0f; CantidadBase = 350; break;
+    case EDificultad::Medio:   VelocidadBase = 2400.0f; CantidadBase = 420; break;
+    case EDificultad::Dificil: VelocidadBase = 2800.0f; CantidadBase = 500; break;
     }
+    Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
 }
 
-// ========== NIVELES 10, 11, 12: DIFICULTAD "IMPOSIBLE" (EL VERDADERO RETO) ==========
 void ALevelDirector::ConstruirNivel10()
 {
     if (!Builder) return;
-    // Saturación masiva de Asteroides Fractales (Se dividen en el aire)
-    Builder->SpawnAsteroides(600, 3500.0f);
-    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("NIVEL 10: ¡DIFICULTAD IMPOSIBLE - TORMENTA FRACTAL!"));
+    float VelocidadBase = 2600.0f;
+    int32 CantidadBase = 460;
+    switch (Dificultad)
+    {
+    case EDificultad::Facil:   VelocidadBase = 2200.0f; CantidadBase = 400; break;
+    case EDificultad::Medio:   VelocidadBase = 2600.0f; CantidadBase = 460; break;
+    case EDificultad::Dificil: VelocidadBase = 3000.0f; CantidadBase = 550; break;
+    }
+    Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
 }
 
 void ALevelDirector::ConstruirNivel11()
 {
     if (!Builder) return;
-    // Velocidad absurda con Asteroides Fractales
-    Builder->SpawnAsteroides(700, 4200.0f);
-    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("NIVEL 11: ¡DIFICULTAD IMPOSIBLE - VELOCIDAD CRÍTICA!"));
+    float VelocidadBase = 2800.0f;
+    int32 CantidadBase = 500;
+    switch (Dificultad)
+    {
+    case EDificultad::Facil:   VelocidadBase = 2400.0f; CantidadBase = 450; break;
+    case EDificultad::Medio:   VelocidadBase = 2800.0f; CantidadBase = 500; break;
+    case EDificultad::Dificil: VelocidadBase = 3200.0f; CantidadBase = 600; break;
+    }
+    Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
 }
 
 void ALevelDirector::ConstruirNivel12()
 {
     if (!Builder) return;
-    // El fin del mundo: Asteroides explosivos a velocidad supersónica (Te quitan 50 de vida por impacto)
-    Builder->SpawnAsteroides(750, 4200.0f);
-
-    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("NIVEL 12: ¡ENFRENTA AL DIOS DE LA NODRIZA!"));
+    float VelocidadBase = 3000.0f;
+    int32 CantidadBase = 550;
+    switch (Dificultad)
+    {
+    case EDificultad::Facil:   VelocidadBase = 2600.0f; CantidadBase = 500; break;
+    case EDificultad::Medio:   VelocidadBase = 3000.0f; CantidadBase = 550; break;
+    case EDificultad::Dificil: VelocidadBase = 3500.0f; CantidadBase = 650; break;
+    }
+    Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
 }

@@ -1,150 +1,59 @@
 #include "AsteroideFractal.h"
-#include "Components/SphereComponent.h"
-#include "Components/PrimitiveComponent.h"
+#include "UObject/ConstructorHelpers.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
-#include "Engine/Engine.h"
-#include "GameFramework/Actor.h"
-#include "Proyectil.h"
+#include "NaveJugador.h"
 
 AAsteroideFractal::AAsteroideFractal()
 {
     PrimaryActorTick.bCanEverTick = true;
 
-    bEsFragmento = false;
-    EscalaHijos = 0.6f;
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(TEXT("StaticMesh'/Engine/BasicShapes/Cylinder.Cylinder'"));
+    if (CylinderMesh.Succeeded() && MallaAsteroide)
+    {
+        MallaAsteroide->SetStaticMesh(CylinderMesh.Object);
+        MallaAsteroide->SetRelativeScale3D(FVector(2.0f, 2.0f, 2.0f));
+    }
 
-    VelocidadMovimiento = 600.0f;
+    DanoPorChoque = 30.0f;
+    ClaseFragmento = AAsteroideBase::StaticClass();
 }
 
 void AAsteroideFractal::BeginPlay()
 {
     Super::BeginPlay();
-
-    if (EsferaColision)
-    {
-        // Quitar lógica base
-        EsferaColision->OnComponentBeginOverlap.RemoveDynamic(
-            this,
-            &AAsteroideFractal::AlSuperponerse
-        );
-
-        // Agregar lógica fractal
-        EsferaColision->OnComponentBeginOverlap.AddDynamic(
-            this,
-            &AAsteroideFractal::AlRecibirImpactoProyectil
-        );
-    }
 }
 
-void AAsteroideFractal::AlRecibirImpactoProyectil(
-    UPrimitiveComponent* OverlappedComponent,
-    AActor* OtherActor,
-    UPrimitiveComponent* OtherComp,
-    int32 OtherBodyIndex,
-    bool bFromSweep,
-    const FHitResult& SweepResult)
+void AAsteroideFractal::AlSuperponerse(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+    bool bFromSweep, const FHitResult& SweepResult)
 {
     if (!OtherActor || OtherActor == this) return;
 
-    // Si el impacto fue un proyectil
-    if (OtherActor->IsA(AProyectil::StaticClass()))
+    ANaveJugador* Jugador = Cast<ANaveJugador>(OtherActor);
+    if (Jugador)
     {
-        // Solo dividir el asteroide padre
-        if (!bEsFragmento && GetWorld())
-        {
-            FVector UbicacionActual = GetActorLocation();
-
-            FVector DirIzquierda =
-                DireccionMovimiento.RotateAngleAxis(
-                    -90.0f,
-                    FVector(0.0f, 0.0f, 1.0f)
-                );
-
-            FVector DirDerecha =
-                DireccionMovimiento.RotateAngleAxis(
-                    90.0f,
-                    FVector(0.0f, 0.0f, 1.0f)
-                );
-
-            FActorSpawnParameters SpawnParams;
-            SpawnParams.SpawnCollisionHandlingOverride =
-                ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-            // HIJO IZQUIERDO
-            AAsteroideFractal* HijoIzq =
-                GetWorld()->SpawnActor<AAsteroideFractal>(
-                    AAsteroideFractal::StaticClass(),
-                    UbicacionActual,
-                    FRotator::ZeroRotator,
-                    SpawnParams
-                );
-
-            if (HijoIzq)
-            {
-                HijoIzq->bEsFragmento = true;
-
-                HijoIzq->SetActorScale3D(
-                    GetActorScale3D() * EscalaHijos
-                );
-
-                HijoIzq->ConfigurarMovimiento(
-                    VelocidadMovimiento * 1.3f,
-                    DirIzquierda
-                );
-
-                HijoIzq->SetLifeSpan(6.0f);
-            }
-
-            // HIJO DERECHO
-            AAsteroideFractal* HijoDer =
-                GetWorld()->SpawnActor<AAsteroideFractal>(
-                    AAsteroideFractal::StaticClass(),
-                    UbicacionActual,
-                    FRotator::ZeroRotator,
-                    SpawnParams
-                );
-
-            if (HijoDer)
-            {
-                HijoDer->bEsFragmento = true;
-
-                HijoDer->SetActorScale3D(
-                    GetActorScale3D() * EscalaHijos
-                );
-
-                HijoDer->ConfigurarMovimiento(
-                    VelocidadMovimiento * 1.3f,
-                    DirDerecha
-                );
-
-                HijoDer->SetLifeSpan(6.0f);
-            }
-
-            if (GEngine)
-            {
-                GEngine->AddOnScreenDebugMessage(
-                    -1,
-                    2.f,
-                    FColor::Yellow,
-                    TEXT("FRACTAL: Asteroide dividido")
-                );
-            }
-        }
-
-        OtherActor->Destroy();
+        Jugador->RecibirDano(DanoPorChoque);
+        Fragmentar();
         Destroy();
     }
-    else
+    // Si choca con otra cosa, el comportamiento base no hace nada especial
+}
+
+void AAsteroideFractal::Fragmentar()
+{
+    if (!GetWorld() || !ClaseFragmento) return;
+
+    for (int32 i = 0; i < FragmentosHijos; ++i)
     {
-        // comportamiento base normal
-        Super::AlSuperponerse(
-            OverlappedComponent,
-            OtherActor,
-            OtherComp,
-            OtherBodyIndex,
-            bFromSweep,
-            SweepResult
-        );
+        FVector Offset = FMath::VRand() * 200.0f;
+        FVector Pos = GetActorLocation() + Offset;
+        FRotator Rot = FRotator(FMath::RandRange(-180.f, 180.f), FMath::RandRange(-180.f, 180.f), 0.f);
+
+        AAsteroideBase* Hijo = GetWorld()->SpawnActor<AAsteroideBase>(ClaseFragmento, Pos, Rot);
+        if (Hijo)
+        {
+            Hijo->SetLifeSpan(8.0f);
+        }
     }
 }

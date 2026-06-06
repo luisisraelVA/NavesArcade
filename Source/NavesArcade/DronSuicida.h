@@ -1,24 +1,17 @@
-#pragma once
-
+﻿#pragma once
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
+#include "EnemigoBase.h"
 #include "DronSuicida.generated.h"
 
 UCLASS()
-class NAVESARCADE_API ADronSuicida : public APawn
+class NAVESARCADE_API ADronSuicida : public AEnemigoBase
 {
     GENERATED_BODY()
-
 public:
     ADronSuicida();
-    void RecibirDano(float Cantidad);
 protected:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
-    virtual void Destroyed() override;
-
-    UPROPERTY(VisibleAnywhere, Category = "Components")
-    class USphereComponent* EsferaColision;
 
     UPROPERTY(VisibleAnywhere, Category = "Components")
     class UStaticMeshComponent* Malla;
@@ -38,7 +31,5 @@ protected:
     bool bActivado = false;
 
     UFUNCTION()
-    void AlImpactar(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-        UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
-        const FHitResult& SweepResult);
+    void AlImpactar(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };

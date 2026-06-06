@@ -7,16 +7,22 @@
 UCLASS()
 class NAVESARCADE_API ADodgerHUD : public AHUD
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
 public:
-    ADodgerHUD();
-    virtual void DrawHUD() override;
+	ADodgerHUD();
+	virtual void DrawHUD() override;
 
 protected:
-    virtual void BeginPlay() override;
+	virtual void BeginPlay() override;
 
 private:
-    UPROPERTY()
-    UFont* FuentePrincipal;
+	UPROPERTY()
+	UFont* FuentePrincipal;
+
+	TArray<AActor*> NucleosCacheados;
+	float TiempoUltimoCacheo = 0.0f;
+
+	
+	int32 NivelActualGuardado = 1;
 };

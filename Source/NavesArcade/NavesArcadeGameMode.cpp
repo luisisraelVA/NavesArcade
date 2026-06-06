@@ -9,28 +9,18 @@
 #include "AsteroideFractal.h"
 #include "NucleoEnergia.h"
 #include "PortalSalto.h"
-#include "LevelBuilder.h"
-#include "LevelDirector.h"
-#include "FaseUnoFab.h"
-#include "FaseFinalFab.h"
-#include "FaseAvanzadaFab.h"
-
 
 ANavesArcadeGameMode::ANavesArcadeGameMode()
 {
     DefaultPawnClass = ANaveJugador::StaticClass();
     HUDClass = ADodgerHUD::StaticClass();
     NivelActual = 1;
-    NucleosRequeridos = 3;
+    NucleosRequeridos = 3;       
 }
 
 void ANavesArcadeGameMode::BeginPlay()
 {
     Super::BeginPlay();
-
-    FabricaFaseUno = NewObject<UFaseUnoFab>(this);
-    FabricaFaseFinal = NewObject<UFaseFinalFab>(this);
-    FabricaFaseAvanzada = NewObject<UFaseAvanzadaFab>(this);
 
     FVector PosicionBuilder = FVector(1500.0f, 0.0f, 0.0f);
     InstanciaBuilder = GetWorld()->SpawnActor<ALevelBuilder>(ALevelBuilder::StaticClass(), PosicionBuilder, FRotator::ZeroRotator);
@@ -60,34 +50,26 @@ void ANavesArcadeGameMode::BeginPlay()
 
 void ANavesArcadeGameMode::ActualizarRequerimientoPorNivel()
 {
-    if (NivelActual <= 2) NucleosRequeridos = 3;
+    // Solo el nivel 12 necesita 1 núcleo; los demás mantienen su cantidad original
+    if (NivelActual == 12)
+    {
+        NucleosRequeridos = 1;
+    }
+    else if (NivelActual <= 2) NucleosRequeridos = 3;
     else if (NivelActual <= 4) NucleosRequeridos = 4;
     else if (NivelActual <= 6) NucleosRequeridos = 5;
     else if (NivelActual <= 9) NucleosRequeridos = 6;
-    else NucleosRequeridos = 7;
+    else NucleosRequeridos = 7;   // Niveles 10 y 11
 }
 
 void ANavesArcadeGameMode::CargarRecetaNivel(int32 NumeroNivel)
 {
     if (!InstanciaBuilder || !InstanciaDirector) return;
 
-    // Fábrica de enemigos según rango de niveles
-    if (NumeroNivel <= 3)
-        InstanciaBuilder->SetFabrica(FabricaFaseUno);
-    else if (NumeroNivel <= 6)
-        InstanciaBuilder->SetFabrica(FabricaFaseFinal);
-    else
-        InstanciaBuilder->SetFabrica(FabricaFaseAvanzada);
-
-    // Tipo de asteroide
-    if (NumeroNivel == 1 || NumeroNivel == 7)
-        InstanciaBuilder->SetClaseAsteroide(AAsteroideDinamico::StaticClass());
-    else if (NumeroNivel == 2 || NumeroNivel == 8)
-        InstanciaBuilder->SetClaseAsteroide(AAsteroideErratico::StaticClass());
-    else if (NumeroNivel == 3 || NumeroNivel == 9)
-        InstanciaBuilder->SetClaseAsteroide(AAsteroideExplosivo::StaticClass());
-    else
-        InstanciaBuilder->SetClaseAsteroide(AAsteroideFractal::StaticClass());
+    if (NumeroNivel == 1 || NumeroNivel == 7) InstanciaBuilder->SetClaseAsteroide(AAsteroideDinamico::StaticClass());
+    else if (NumeroNivel == 2 || NumeroNivel == 8) InstanciaBuilder->SetClaseAsteroide(AAsteroideErratico::StaticClass());
+    else if (NumeroNivel == 3 || NumeroNivel == 9) InstanciaBuilder->SetClaseAsteroide(AAsteroideExplosivo::StaticClass());
+    else InstanciaBuilder->SetClaseAsteroide(AAsteroideFractal::StaticClass());
 
     switch (NumeroNivel)
     {
@@ -110,24 +92,13 @@ void ANavesArcadeGameMode::CargarRecetaNivel(int32 NumeroNivel)
 void ANavesArcadeGameMode::AvanzarSiguienteNivel()
 {
     int32 ProximoNivel = NivelActual + 1;
-    if (ProximoNivel > 12) ProximoNivel = 1;   // Reinicia al 1 (o muestra final)
-    FString NombreSiguienteNivel = FString::Printf(TEXT("Nivel-%02d"), ProximoNivel);
-    FName NivelSiguiente = FName(*NombreSiguienteNivel);
-    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Loading %s..."), *NombreSiguienteNivel));
-    UGameplayStatics::OpenLevel(GetWorld(), NivelSiguiente);
-}
+    if (ProximoNivel > NUMERO_TOTAL_NIVELES) ProximoNivel = 1;
 
-void ANavesArcadeGameMode::LimpiarMapa()
-{
-    TArray<AActor*> Asteroides;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAsteroideBase::StaticClass(), Asteroides);
-    for (AActor* Asteroide : Asteroides) if (Asteroide) Asteroide->Destroy();
+    // EL ARREGLO: Solo usamos el nombre corto puro (ej. "Nivel-02"). Nada de rutas largas ni puntos.
+    FString NombreCorto = FString::Printf(TEXT("Nivel-%02d"), ProximoNivel);
 
-    TArray<AActor*> Energias;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ANucleoEnergia::StaticClass(), Energias);
-    for (AActor* Energia : Energias) if (Energia) Energia->Destroy();
+    if (GEngine)
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Loading %s..."), *NombreCorto));
 
-    TArray<AActor*> Portales;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), APortalSalto::StaticClass(), Portales);
-    for (AActor* Portal : Portales) if (Portal) Portal->Destroy();
+    UGameplayStatics::OpenLevel(GetWorld(), FName(*NombreCorto));
 }

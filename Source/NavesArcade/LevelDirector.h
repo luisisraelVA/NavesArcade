@@ -39,6 +39,9 @@ public:
     void ConstruirNivel12();
 
 private:
+    // Nueva función que recibe el delegado del Builder
+    void ManejarGeneracionFase(int32 FaseActual);
+
     ALevelBuilder* Builder;
     EDificultad Dificultad;
 };

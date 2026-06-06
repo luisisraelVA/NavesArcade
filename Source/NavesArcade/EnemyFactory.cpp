@@ -1,4 +1,5 @@
 #include "EnemyFactory.h"
+#include "EnemigoBase.h"
 #include "DronCentinela.h"
 #include "NaveAcechadora.h"
 #include "NaveNodriza.h"
@@ -6,7 +7,6 @@
 #include "DronSuicida.h"
 #include "NaveElite.h"
 #include "Engine/World.h"
-#include "GameFramework/Pawn.h"
 
 AActor* UEnemyFactory::SpawnEnemy(UWorld* World, EEnemyType Type, FVector Location)
 {
@@ -15,32 +15,22 @@ AActor* UEnemyFactory::SpawnEnemy(UWorld* World, EEnemyType Type, FVector Locati
     FActorSpawnParameters SpawnParams;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-    AActor* NuevoEnemigo = nullptr;
+    TSubclassOf<AActor> ClaseAInstanciar = nullptr;
 
     switch (Type)
     {
-    case EEnemyType::Sentry:
-        NuevoEnemigo = World->SpawnActor<ADronCentinela>(ADronCentinela::StaticClass(), Location, FRotator::ZeroRotator, SpawnParams);
-        break;
-    case EEnemyType::Hunter:
-        NuevoEnemigo = World->SpawnActor<ANaveAcechadora>(ANaveAcechadora::StaticClass(), Location, FRotator::ZeroRotator, SpawnParams);
-        break;
-    case EEnemyType::Boss:
-        NuevoEnemigo = World->SpawnActor<ANaveNodriza>(ANaveNodriza::StaticClass(), Location, FRotator::ZeroRotator, SpawnParams);
-        break;
-    case EEnemyType::Hybrid:
-        NuevoEnemigo = World->SpawnActor<ADronHibridoAvanzado>(ADronHibridoAvanzado::StaticClass(), Location, FRotator::ZeroRotator, SpawnParams);
-        break;
-    case EEnemyType::Suicide:
-        NuevoEnemigo = World->SpawnActor<ADronSuicida>(ADronSuicida::StaticClass(), Location, FRotator::ZeroRotator, SpawnParams);
-        break;
-    case EEnemyType::Elite:  
-        NuevoEnemigo = World->SpawnActor<ANaveElite>(ANaveElite::StaticClass(), Location, FRotator::ZeroRotator, SpawnParams);
-        break;
+    case EEnemyType::Sentry:  ClaseAInstanciar = ADronCentinela::StaticClass(); break;
+    case EEnemyType::Hunter:  ClaseAInstanciar = ANaveAcechadora::StaticClass(); break;
+    case EEnemyType::Boss:    ClaseAInstanciar = ANaveNodriza::StaticClass(); break;
+    case EEnemyType::Hybrid:  ClaseAInstanciar = ADronHibridoAvanzado::StaticClass(); break;
+    case EEnemyType::Suicide: ClaseAInstanciar = ADronSuicida::StaticClass(); break;
+    case EEnemyType::Elite:   ClaseAInstanciar = ANaveElite::StaticClass(); break;
     }
 
-    if (NuevoEnemigo)
+    AActor* NuevoEnemigo = nullptr;
+    if (ClaseAInstanciar)
     {
+        NuevoEnemigo = World->SpawnActor<AActor>(ClaseAInstanciar, Location, FRotator::ZeroRotator, SpawnParams);
         if (APawn* EnemigoPawn = Cast<APawn>(NuevoEnemigo))
         {
             EnemigoPawn->SpawnDefaultController();

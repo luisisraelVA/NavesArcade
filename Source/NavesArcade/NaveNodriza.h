@@ -1,22 +1,18 @@
-
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
+#include "EnemigoBase.h"
 #include "NaveNodriza.generated.h"
 
 UCLASS()
-class NAVESARCADE_API ANaveNodriza : public APawn
+class NAVESARCADE_API ANaveNodriza : public AEnemigoBase
 {
     GENERATED_BODY()
 
 public:
     ANaveNodriza();
-
     virtual void Tick(float DeltaTime) override;
-
-    void RecibirDano(float Dano);
+    virtual void RecibirDano(float Dano) override;
 
 protected:
     virtual void BeginPlay() override;
@@ -30,11 +26,8 @@ protected:
 
     float VidaActual;
     float VidaMaxima;
-
     bool bFaseDos;
     bool bMuerto;
-
-    // --- NIVEL 9 ---
     float AnguloEspiralAcumulado;
     bool bEsNivelNueve;
 
@@ -44,12 +37,8 @@ protected:
     FTimerHandle TimerMuerteCinematica;
 
     void DispararAbanico();
-
-    // --- NUEVO ATAQUE HELICOIDAL ---
     void DispararEspiralHelicoidal();
-
     void InvocarKamikaze();
-
     void RestaurarMaterial();
 
     UFUNCTION()

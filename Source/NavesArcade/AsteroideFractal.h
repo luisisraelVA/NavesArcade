@@ -1,11 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AsteroideBase.h"
+#include "AsteroideDinamico.h"
 #include "AsteroideFractal.generated.h"
 
 UCLASS()
-class NAVESARCADE_API AAsteroideFractal : public AAsteroideBase
+class NAVESARCADE_API AAsteroideFractal : public AAsteroideDinamico
 {
     GENERATED_BODY()
 

@@ -1,43 +1,32 @@
 ﻿#include "DronCentinela.h"
 #include "Components/StaticMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
-#include "NaveJugador.h"
 #include "Proyectil.h"
 #include "TimerManager.h"
 #include "Kismet/GameplayStatics.h"
-#include "LevelBuilder.h"
-#include "Engine/StaticMesh.h"
-#include "Engine/Engine.h"
-#include "NavesArcadeGameMode.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "GameAssets.h"
+#include "Components/SphereComponent.h"
 
 ADronCentinela::ADronCentinela()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    // La esfera raíz ya existe (heredada de EnemigoBase), solo ajustamos radio
+    EsferaColision->SetSphereRadius(80.0f);   // tamaño adecuado
 
+    // Malla visual (sin colisiones)
     MallaDron = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaDron"));
-    RootComponent = MallaDron;
-    MallaDron->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-    MallaDron->SetGenerateOverlapEvents(true);
-    MallaDron->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    MallaDron->SetupAttachment(RootComponent);
+    MallaDron->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    MallaDron->SetGenerateOverlapEvents(false);
 
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> MallaDronAsset(TEXT("StaticMesh'/Game/Meshes/Enemies/nave-modelo.nave-modelo'"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> MallaDronAsset(GameAssets::MallaDronCentinela);
     if (MallaDronAsset.Succeeded())
     {
         MallaDron->SetStaticMesh(MallaDronAsset.Object);
-        MallaDron->SetRelativeScale3D(FVector(0.2f, 0.2f, 0.2f));
-    }
-    else
-    {
-        static ConstructorHelpers::FObjectFinder<UStaticMesh> EsferaMesh(TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
-        if (EsferaMesh.Succeeded())
-        {
-            MallaDron->SetStaticMesh(EsferaMesh.Object);
-            MallaDron->SetRelativeScale3D(FVector(1.0f, 1.0f, 1.0f));
-        }
+        MallaDron->SetRelativeScale3D(FVector(0.2f));
+        MallaDron->SetRelativeRotation(FRotator(0, -90, 0));
     }
 
-    Tags.Add(FName("Enemy"));
     VelocidadPatrulla = 300.0f;
     ObjetivoActual = nullptr;
 }
@@ -50,8 +39,6 @@ void ADronCentinela::BeginPlay()
     {
         GetWorldTimerManager().SetTimer(TimerCicloDisparo, this, &ADronCentinela::EjecutarDisparoLaser, 3.0f, true, 1.0f);
     }
-    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
-    if (GM) GM->RegistrarEnemigo(this);
 }
 
 void ADronCentinela::Tick(float DeltaTime)
@@ -71,20 +58,16 @@ void ADronCentinela::EjecutarDisparoLaser()
     if (!ObjetivoActual) return;
     FVector Direccion = (ObjetivoActual->GetActorLocation() - GetActorLocation()).GetSafeNormal();
     FVector Origen = GetActorLocation() + Direccion * 150.0f;
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.Owner = this;
-    SpawnParams.Instigator = Cast<APawn>(this);
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), Origen, Direccion.Rotation(), SpawnParams);
+
+    FActorSpawnParameters Params;
+    Params.Owner = this;                    // <-- AÑADIR
+    Params.Instigator = this;               // <-- AÑADIR
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), Origen, Direccion.Rotation(), Params);
 }
 
 void ADronCentinela::Destroyed()
 {
-    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
-    if (GM) GM->DesregistrarEnemigo(this);
-
-    ALevelBuilder* Builder = Cast<ALevelBuilder>(UGameplayStatics::GetActorOfClass(GetWorld(), ALevelBuilder::StaticClass()));
-    if (Builder) Builder->NotificarMuerteEnemigo();
-
+    GetWorldTimerManager().ClearTimer(TimerCicloDisparo);
     Super::Destroyed();
 }

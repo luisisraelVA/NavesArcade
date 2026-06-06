@@ -1,17 +1,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
+#include "EnemigoBase.h"
 #include "DronHibridoAvanzado.generated.h"
 
 UCLASS()
-class NAVESARCADE_API ADronHibridoAvanzado : public APawn
+class NAVESARCADE_API ADronHibridoAvanzado : public AEnemigoBase
 {
     GENERATED_BODY()
 
 public:
     ADronHibridoAvanzado();
-    void RecibirDano(float Cantidad);
+
 protected:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;

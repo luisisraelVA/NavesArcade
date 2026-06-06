@@ -1,14 +1,15 @@
 ﻿#include "NaveJugador.h"
-#include "Components/StaticMeshComponent.h"
+#include "Components/SphereComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "InventoryComponent.h"
 #include "NaveFacade.h"
-#include "UObject/ConstructorHelpers.h"
 #include "Engine/World.h"
 #include "Proyectil.h"
 #include "PortalSalto.h"
+#include "GameAssets.h"
 #include "LevelBuilder.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
@@ -17,13 +18,34 @@
 ANaveJugador::ANaveJugador()
 {
     PrimaryActorTick.bCanEverTick = true;
-    MallaNave = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaNave"));
-    RootComponent = MallaNave;
-    MallaNave->SetEnableGravity(false);
-    MallaNave->SetGenerateOverlapEvents(true);
 
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> ModeloNaveAsset(TEXT("StaticMesh'/Game/Flying/Meshes/UFO.UFO'"));
-    if (ModeloNaveAsset.Succeeded()) MallaNave->SetStaticMesh(ModeloNaveAsset.Object);
+    // Esfera de colisión raíz (solapamiento: daño, núcleos, portales)
+    ColisionNave = CreateDefaultSubobject<USphereComponent>(TEXT("ColisionNave"));
+    RootComponent = ColisionNave;
+    ColisionNave->InitSphereRadius(80.0f);
+    ColisionNave->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+    ColisionNave->SetGenerateOverlapEvents(true);
+
+    // Esfera de colisión física (bloquea contra la nodriza y escenarios)
+    ColisionFisica = CreateDefaultSubobject<USphereComponent>(TEXT("ColisionFisica"));
+    ColisionFisica->SetupAttachment(RootComponent);
+    ColisionFisica->InitSphereRadius(80.0f);
+    ColisionFisica->SetCollisionProfileName(TEXT("Pawn"));        // Bloquea contra otros pawns y objetos estáticos
+    ColisionFisica->SetGenerateOverlapEvents(false);
+
+    // Malla esquelética (solo visual, sin colisión)
+    MallaNave = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MallaNaveVisual"));
+    MallaNave->SetupAttachment(RootComponent);
+    MallaNave->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    MallaNave->SetGenerateOverlapEvents(false);
+
+    static ConstructorHelpers::FObjectFinder<USkeletalMesh> ModeloNaveAsset(GameAssets::MallaNaveJugador);
+    if (ModeloNaveAsset.Succeeded())
+    {
+        MallaNave->SetSkeletalMesh(ModeloNaveAsset.Object);
+        MallaNave->SetRelativeRotation(FRotator(0, -90, 0));    // Ajuste de orientación
+        MallaNave->SetRelativeScale3D(FVector(2.5f, 2.5f, 2.5f));
+    }
 
     BrazoCamara = CreateDefaultSubobject<USpringArmComponent>(TEXT("BrazoCamara"));
     BrazoCamara->SetupAttachment(RootComponent);
@@ -39,7 +61,6 @@ ANaveJugador::ANaveJugador()
     Inventario = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventario"));
     FachadaNave = CreateDefaultSubobject<UNaveFacade>(TEXT("FachadaNave"));
 
-
     IntegridadEstructural = 100.0f;
     VelocidadMovimiento = 1000.0f;
     VelocidadRotacion = 85.0f;
@@ -47,16 +68,12 @@ ANaveJugador::ANaveJugador()
     PuntuacionTotal = 0;
     MultiplicadorCombo = 1.0f;
     TiempoTemblorCamara = 0.0f;
-    NucleosRecolectados = 0;
-    EnergiaActual = 0.0f;
-
     ClaseProyectil = AProyectil::StaticClass();
 }
 
 void ANaveJugador::BeginPlay()
 {
     Super::BeginPlay();
-
     ANavesArcadeGameMode* GameMode = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
     if (Inventario && GameMode)
     {
@@ -71,26 +88,18 @@ void ANaveJugador::Tick(float DeltaTime)
     {
         TiempoTemblorCamara -= DeltaTime;
         BrazoCamara->SocketOffset = FVector(FMath::RandRange(-20.f, 20.f), FMath::RandRange(-20.f, 20.f), FMath::RandRange(-20.f, 20.f));
+        if (TiempoTemblorCamara <= 0.0f) BrazoCamara->SocketOffset = FVector::ZeroVector;
     }
-    else BrazoCamara->SocketOffset = FVector::ZeroVector;
 }
-
-// Parte corregida de NaveJugador.cpp
 
 void ANaveJugador::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
-
     if (!PlayerInputComponent) return;
 
-    // Movimiento
     PlayerInputComponent->BindAxis("MoverAdelante", this, &ANaveJugador::MoverAdelante);
-
-    // Rotaciones
     PlayerInputComponent->BindAxis("RotarDerecha", this, &ANaveJugador::RotarDerecha);
     PlayerInputComponent->BindAxis("RotarArriba", this, &ANaveJugador::RotarArriba);
-
-    // Disparo
     PlayerInputComponent->BindAction("Disparar", IE_Pressed, this, &ANaveJugador::InicializarDisparo);
 }
 
@@ -119,7 +128,8 @@ void ANaveJugador::RecibirDano(float CantidadDano)
 {
     if (IntegridadEstructural <= 0.0f) return;
 
-    //IntegridadEstructural -= CantidadDano;   // Daño real
+    IntegridadEstructural -= CantidadDano;
+
     MultiplicadorCombo = 1.0f;
     TiempoTemblorCamara = 0.5f;
 
@@ -127,25 +137,22 @@ void ANaveJugador::RecibirDano(float CantidadDano)
 
     if (IntegridadEstructural <= 0.0f)
     {
-        VidasActuales--;                     // Resta vidas
+        VidasActuales--;
         SetActorHiddenInGame(true);
         SetActorEnableCollision(false);
 
         if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, TEXT("¡NAVE DESTRUIDA! Respawn en 2 segundos..."));
 
+        APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+        if (PC) PC->DisableInput(PC);
+
         if (VidasActuales > 0)
         {
-            APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-            if (PC) PC->DisableInput(PC);
-
             FTimerHandle TimerRespawn;
             GetWorldTimerManager().SetTimer(TimerRespawn, this, &ANaveJugador::Reaparecer, 2.0f, false);
         }
         else
         {
-            APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-            if (PC) PC->DisableInput(PC);
-
             if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, TEXT("GAME OVER - Reiniciando nivel..."));
             FTimerHandle TimerReinicio;
             GetWorldTimerManager().SetTimer(TimerReinicio, this, &ANaveJugador::ReiniciarNivel, 3.5f, false);
@@ -167,17 +174,16 @@ void ANaveJugador::Reaparecer()
 
 void ANaveJugador::RecolectarEnergia(float Cantidad)
 {
-    NucleosRecolectados++;
-    EnergiaActual = (float)NucleosRecolectados;
-    if (Inventario) Inventario->AgregarEnergia(1.0f);   // ← AÑADIR ESTA LÍNEA
+    if (Inventario) Inventario->AgregarEnergia(Cantidad);
     SumarPuntos(1000);
 
     ANavesArcadeGameMode* GameMode = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
     int32 Requeridos = (Inventario ? Inventario->GetRequerimientoNivel() : (GameMode ? GameMode->GetNucleosRequeridos() : 3));
+    int32 Actuales = GetNucleosRecolectados();
 
-    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("Núcleo %d / %d"), NucleosRecolectados, Requeridos));
+    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("Núcleo %d / %d"), Actuales, Requeridos));
 
-    if (NucleosRecolectados >= Requeridos)
+    if (Actuales >= Requeridos)
     {
         if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, TEXT("¡PORTAL ABIERTO! ¡ESCAPA!"));
         FVector UbicacionPortal = GetActorLocation() + (GetActorForwardVector() * 6000.0f);
@@ -188,6 +194,11 @@ void ANaveJugador::RecolectarEnergia(float Cantidad)
         AActor* BuilderActor = UGameplayStatics::GetActorOfClass(GetWorld(), ALevelBuilder::StaticClass());
         if (BuilderActor) Cast<ALevelBuilder>(BuilderActor)->GenerarFaseObjetivo();
     }
+}
+
+int32 ANaveJugador::GetNucleosRecolectados() const
+{
+    return Inventario ? (int32)Inventario->GetEnergiaActual() : 0;
 }
 
 void ANaveJugador::SumarPuntos(int32 PuntosBase)

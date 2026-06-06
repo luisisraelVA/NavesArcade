@@ -10,162 +10,170 @@
 
 ADodgerHUD::ADodgerHUD()
 {
-    static ConstructorHelpers::FObjectFinder<UFont> FontObj(TEXT("/Engine/EngineFonts/RobotoDistanceField"));
-    if (FontObj.Succeeded()) FuentePrincipal = FontObj.Object;
+	static ConstructorHelpers::FObjectFinder<UFont> FontObj(TEXT("/Engine/EngineFonts/RobotoDistanceField"));
+	if (FontObj.Succeeded()) FuentePrincipal = FontObj.Object;
 }
 
-void ADodgerHUD::BeginPlay() { Super::BeginPlay(); }
+void ADodgerHUD::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// OPTIMIZACIÓN: Calculamos el nombre del mapa una sola vez al inicio
+	if (GetWorld())
+	{
+		FString NombreMapa = GetWorld()->GetMapName();
+		NombreMapa.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
+		if (NombreMapa.StartsWith("Nivel-"))
+		{
+			FString NumStr = NombreMapa.RightChop(6);
+			NivelActualGuardado = FCString::Atoi(*NumStr);
+		}
+	}
+}
 
 void ADodgerHUD::DrawHUD()
 {
-    Super::DrawHUD();
+	Super::DrawHUD();
 
-    APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-    ANaveJugador* MiNave = Cast<ANaveJugador>(PlayerPawn);
-    APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
+	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	ANaveJugador* MiNave = Cast<ANaveJugador>(PlayerPawn);
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
 
-    if (!MiNave || !Canvas || !FuentePrincipal || !PC || !GM) return;
+	if (!MiNave || !Canvas || !FuentePrincipal || !PC || !GM) return;
 
-    // -------------------------------------------------------
-    // NUEVO: Si se completó el juego, mostrar mensaje especial
-    // -------------------------------------------------------
-    if (GM->bJuegoCompletado)
-    {
-        float Ancho = Canvas->SizeX;
-        float Alto = Canvas->SizeY;
-        DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.8f), 0, 0, Ancho, Alto);
-        DrawText(TEXT("¡HAS COMPLETADO EL JUEGO!"), FLinearColor::Yellow, Ancho / 2.f - 250.f, Alto / 2.f - 30.f, FuentePrincipal, true);
-        DrawText(FString::Printf(TEXT("Puntuación final: %d"), MiNave->GetPuntuacion()), FLinearColor::White, Ancho / 2.f - 150.f, Alto / 2.f + 20.f, FuentePrincipal, true);
-        return; // No dibujar el resto del HUD
-    }
+	if (GM->bJuegoCompletado)
+	{
+		float Ancho = Canvas->SizeX;
+		float Alto = Canvas->SizeY;
+		DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.8f), 0, 0, Ancho, Alto);
+		DrawText(TEXT("¡HAS COMPLETADO EL JUEGO!"), FLinearColor::Yellow, Ancho / 2.f - 250.f, Alto / 2.f - 30.f, FuentePrincipal, true);
+		DrawText(FString::Printf(TEXT("Puntuación final: %d"), MiNave->GetPuntuacion()), FLinearColor::White, Ancho / 2.f - 150.f, Alto / 2.f + 20.f, FuentePrincipal, true);
+		return;
+	}
 
-    // ---------- HUD normal (sin cambios a partir de aquí) ----------
-    UNaveFacade* Facade = MiNave->FindComponentByClass<UNaveFacade>();
-    if (!Facade) return;
+	UNaveFacade* Facade = MiNave->FindComponentByClass<UNaveFacade>();
+	if (!Facade) return;
 
-    float VidaReal = Facade->ObtenerVidaNave();
-    int32 VidasRestantes = MiNave->GetVidas();
-    int32 Puntos = MiNave->GetPuntuacion();
-    float Combo = MiNave->GetCombo();
-    int32 Recolectados = MiNave->GetNucleosRecolectados();
-    float AnchoPantalla = Canvas->SizeX;
-    float AltoPantalla = Canvas->SizeY;
+	float VidaReal = Facade->ObtenerVidaNave();
+	int32 VidasRestantes = MiNave->GetVidas();
+	int32 Puntos = MiNave->GetPuntuacion();
+	float Combo = MiNave->GetCombo();
+	int32 Recolectados = MiNave->GetNucleosRecolectados();
+	float AnchoPantalla = Canvas->SizeX;
+	float AltoPantalla = Canvas->SizeY;
 
-    FString NombreMapa = GetWorld()->GetMapName();
-    NombreMapa.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
-    int32 NivelActual = 0;
-    if (NombreMapa.StartsWith("Nivel-"))
-    {
-        FString NumStr = NombreMapa.RightChop(6);
-        NivelActual = FCString::Atoi(*NumStr);
-    }
+	if (VidasRestantes > 0 && VidaReal > 0)
+	{
+		DrawRect(FLinearColor(0.0f, 0.0f, 0.05f, 0.7f), 20.0f, 20.0f, 400.0f, 160.0f);
+		DrawText(FString::Printf(TEXT("LIVES: %d"), VidasRestantes), FLinearColor::White, 40.f, 30.f, FuentePrincipal, true);
 
-    if (VidasRestantes > 0 && VidaReal > 0)
-    {
-        DrawRect(FLinearColor(0.0f, 0.0f, 0.05f, 0.7f), 20.0f, 20.0f, 400.0f, 160.0f);
-        DrawText(FString::Printf(TEXT("LIVES: %d"), VidasRestantes), FLinearColor::White, 40.f, 30.f, FuentePrincipal, true);
-        DrawText(FString::Printf(TEXT("LEVEL: %d"), NivelActual), FLinearColor::White, 40.f, 55.f, FuentePrincipal, true);
+		// Usamos la variable cacheada para evitar micro-tirones de CPU
+		DrawText(FString::Printf(TEXT("LEVEL: %d"), NivelActualGuardado), FLinearColor::White, 40.f, 55.f, FuentePrincipal, true);
 
-        int32 NucleosReq = GM ? GM->GetNucleosRequeridos() : 3;
-        DrawText(FString::Printf(TEXT("CORES: %d / %d"), Recolectados, NucleosReq), FLinearColor(0.0f, 1.0f, 1.0f), 40.f, 80.f, FuentePrincipal, true);
+		int32 NucleosReq = GM ? GM->GetNucleosRequeridos() : 3;
+		DrawText(FString::Printf(TEXT("CORES: %d / %d"), Recolectados, NucleosReq), FLinearColor(0.0f, 1.0f, 1.0f), 40.f, 80.f, FuentePrincipal, true);
 
-        DrawText(TEXT("INTEGRITY:"), FLinearColor::White, 40.f, 120.f, FuentePrincipal, true);
-        FLinearColor ColorVida = VidaReal > 50 ? FLinearColor::Green : (VidaReal > 25 ? FLinearColor::Yellow : FLinearColor::Red);
-        DrawRect(FLinearColor(0.1f, 0.0f, 0.0f, 0.8f), 190.0f, 125.0f, 200.0f, 15.0f);
-        DrawRect(ColorVida, 190.0f, 125.0f, (VidaReal / 100.0f) * 200.0f, 15.0f);
+		DrawText(TEXT("INTEGRITY:"), FLinearColor::White, 40.f, 120.f, FuentePrincipal, true);
+		FLinearColor ColorVida = VidaReal > 50 ? FLinearColor::Green : (VidaReal > 25 ? FLinearColor::Yellow : FLinearColor::Red);
+		DrawRect(FLinearColor(0.1f, 0.0f, 0.0f, 0.8f), 190.0f, 125.0f, 200.0f, 15.0f);
+		DrawRect(ColorVida, 190.0f, 125.0f, (VidaReal / 100.0f) * 200.0f, 15.0f);
 
-        DrawRect(FLinearColor(0.0f, 0.0f, 0.05f, 0.7f), AnchoPantalla - 320.0f, 20.0f, 300.0f, 100.0f);
-        DrawText(FString::Printf(TEXT("SCORE: %d"), Puntos), FLinearColor::Yellow, AnchoPantalla - 300.0f, 30.0f, FuentePrincipal, true);
-        FLinearColor ColorCombo = (Combo > 1.5f) ? FLinearColor(1.0f, 0.5f, 0.0f) : FLinearColor::White;
-        DrawText(FString::Printf(TEXT("COMBO: x%.1f"), Combo), ColorCombo, AnchoPantalla - 300.0f, 75.0f, FuentePrincipal, true);
+		DrawRect(FLinearColor(0.0f, 0.0f, 0.05f, 0.7f), AnchoPantalla - 320.0f, 20.0f, 300.0f, 100.0f);
+		DrawText(FString::Printf(TEXT("SCORE: %d"), Puntos), FLinearColor::Yellow, AnchoPantalla - 300.0f, 30.0f, FuentePrincipal, true);
+		FLinearColor ColorCombo = (Combo > 1.5f) ? FLinearColor(1.0f, 0.5f, 0.0f) : FLinearColor::White;
+		DrawText(FString::Printf(TEXT("COMBO: x%.1f"), Combo), ColorCombo, AnchoPantalla - 300.0f, 75.0f, FuentePrincipal, true);
 
-        if (VidaReal <= 25.0f)
-        {
-            float Alpha = FMath::Abs(FMath::Sin(GetWorld()->GetTimeSeconds() * 5.0f)) * 0.3f;
-            DrawRect(FLinearColor(1.0f, 0.0f, 0.0f, Alpha), 0.0f, 0.0f, AnchoPantalla, AltoPantalla);
-        }
+		if (VidaReal <= 25.0f)
+		{
+			float Alpha = FMath::Abs(FMath::Sin(GetWorld()->GetTimeSeconds() * 5.0f)) * 0.3f;
+			DrawRect(FLinearColor(1.0f, 0.0f, 0.0f, Alpha), 0.0f, 0.0f, AnchoPantalla, AltoPantalla);
+		}
 
-        if (Recolectados >= NucleosReq)
-        {
-            AActor* Portal = UGameplayStatics::GetActorOfClass(GetWorld(), APortalSalto::StaticClass());
-            if (Portal)
-            {
-                FVector2D PosPantalla;
-                if (PC->ProjectWorldLocationToScreen(Portal->GetActorLocation(), PosPantalla))
-                {
-                    float X = FMath::Clamp(PosPantalla.X, 50.0f, AnchoPantalla - 50.0f);
-                    float Y = FMath::Clamp(PosPantalla.Y, 50.0f, AltoPantalla - 50.0f);
-                    float Pulsacion = FMath::Abs(FMath::Sin(GetWorld()->GetTimeSeconds() * 6.0f)) * 40.0f + 30.0f;
-                    DrawLine(X - Pulsacion, Y - Pulsacion, X + Pulsacion, Y - Pulsacion, FLinearColor::Green, 3.0f);
-                    DrawLine(X - Pulsacion, Y + Pulsacion, X + Pulsacion, Y + Pulsacion, FLinearColor::Green, 3.0f);
-                    DrawLine(X - Pulsacion, Y - Pulsacion, X - Pulsacion, Y + Pulsacion, FLinearColor::Green, 3.0f);
-                    DrawLine(X + Pulsacion, Y - Pulsacion, X + Pulsacion, Y + Pulsacion, FLinearColor::Green, 3.0f);
-                    DrawText(TEXT("PORTAL"), FLinearColor::Green, X - 40.0f, Y - Pulsacion - 20.0f, FuentePrincipal, true);
-                }
-            }
-        }
+		if (Recolectados >= NucleosReq)
+		{
+			AActor* Portal = UGameplayStatics::GetActorOfClass(GetWorld(), APortalSalto::StaticClass());
+			if (Portal)
+			{
+				FVector2D PosPantalla;
+				if (PC->ProjectWorldLocationToScreen(Portal->GetActorLocation(), PosPantalla))
+				{
+					float X = FMath::Clamp(PosPantalla.X, 50.0f, AnchoPantalla - 50.0f);
+					float Y = FMath::Clamp(PosPantalla.Y, 50.0f, AltoPantalla - 50.0f);
+					float Pulsacion = FMath::Abs(FMath::Sin(GetWorld()->GetTimeSeconds() * 6.0f)) * 40.0f + 30.0f;
+					DrawLine(X - Pulsacion, Y - Pulsacion, X + Pulsacion, Y - Pulsacion, FLinearColor::Green, 3.0f);
+					DrawLine(X - Pulsacion, Y + Pulsacion, X + Pulsacion, Y + Pulsacion, FLinearColor::Green, 3.0f);
+					DrawLine(X - Pulsacion, Y - Pulsacion, X - Pulsacion, Y + Pulsacion, FLinearColor::Green, 3.0f);
+					DrawLine(X + Pulsacion, Y - Pulsacion, X + Pulsacion, Y + Pulsacion, FLinearColor::Green, 3.0f);
+					DrawText(TEXT("PORTAL"), FLinearColor::Green, X - 40.0f, Y - Pulsacion - 20.0f, FuentePrincipal, true);
+				}
+			}
+		}
 
-        TArray<AActor*> Nucleos;
-        UGameplayStatics::GetAllActorsOfClass(GetWorld(), ANucleoEnergia::StaticClass(), Nucleos);
-        for (AActor* Nuc : Nucleos)
-        {
-            if (!Nuc) continue;
-            FVector2D PosPantalla;
-            if (PC->ProjectWorldLocationToScreen(Nuc->GetActorLocation(), PosPantalla))
-            {
-                float X = FMath::Clamp(PosPantalla.X, 50.0f, AnchoPantalla - 50.0f);
-                float Y = FMath::Clamp(PosPantalla.Y, 50.0f, AltoPantalla - 50.0f);
-                DrawLine(X - 15, Y - 15, X + 15, Y - 15, FLinearColor(0.0f, 1.0f, 1.0f), 2.0f);
-                DrawLine(X - 15, Y + 15, X + 15, Y + 15, FLinearColor(0.0f, 1.0f, 1.0f), 2.0f);
-                DrawLine(X - 15, Y - 15, X - 15, Y + 15, FLinearColor(0.0f, 1.0f, 1.0f), 2.0f);
-                DrawLine(X + 15, Y - 15, X + 15, Y + 15, FLinearColor(0.0f, 1.0f, 1.0f), 2.0f);
-                DrawText(TEXT("CORE"), FLinearColor(0.0f, 1.0f, 1.0f), X - 20.0f, Y - 25.0f, FuentePrincipal, true);
-            }
-        }
+		float TiempoActual = GetWorld()->GetTimeSeconds();
+		if (TiempoActual - TiempoUltimoCacheo > 0.5f)
+		{
+			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ANucleoEnergia::StaticClass(), NucleosCacheados);
+			TiempoUltimoCacheo = TiempoActual;
+		}
 
-        DrawText(FString::Printf(TEXT("ENEMIES: %d"), GM->EnemigosActivos.Num()), FLinearColor::Yellow, 40.f, 190.f, FuentePrincipal, true);
+		for (AActor* Nuc : NucleosCacheados)
+		{
+			if (!IsValid(Nuc)) continue;
+			FVector2D PosPantalla;
+			if (PC->ProjectWorldLocationToScreen(Nuc->GetActorLocation(), PosPantalla))
+			{
+				float X = FMath::Clamp(PosPantalla.X, 50.0f, AnchoPantalla - 50.0f);
+				float Y = FMath::Clamp(PosPantalla.Y, 50.0f, AltoPantalla - 50.0f);
+				DrawLine(X - 15, Y - 15, X + 15, Y - 15, FLinearColor(0.0f, 1.0f, 1.0f), 2.0f);
+				DrawLine(X - 15, Y + 15, X + 15, Y + 15, FLinearColor(0.0f, 1.0f, 1.0f), 2.0f);
+				DrawLine(X - 15, Y - 15, X - 15, Y + 15, FLinearColor(0.0f, 1.0f, 1.0f), 2.0f);
+				DrawLine(X + 15, Y - 15, X + 15, Y + 15, FLinearColor(0.0f, 1.0f, 1.0f), 2.0f);
+				DrawText(TEXT("CORE"), FLinearColor(0.0f, 1.0f, 1.0f), X - 20.0f, Y - 25.0f, FuentePrincipal, true);
+			}
+		}
 
-        for (AActor* Enemigo : GM->EnemigosActivos)
-        {
-            if (!IsValid(Enemigo)) continue;
+		DrawText(FString::Printf(TEXT("ENEMIES: %d"), GM->EnemigosActivos.Num()), FLinearColor::Yellow, 40.f, 190.f, FuentePrincipal, true);
 
-            float Distancia = FVector::Dist(MiNave->GetActorLocation(), Enemigo->GetActorLocation());
-            FVector2D PosPantalla;
-            bool bProyectado = PC->ProjectWorldLocationToScreen(Enemigo->GetActorLocation(), PosPantalla);
-            float X, Y;
-            if (bProyectado)
-            {
-                X = FMath::Clamp(PosPantalla.X, 30.0f, AnchoPantalla - 30.0f);
-                Y = FMath::Clamp(PosPantalla.Y, 30.0f, AltoPantalla - 30.0f);
-            }
-            else
-            {
-                X = AnchoPantalla / 2.0f;
-                Y = AltoPantalla / 2.0f;
-            }
+		for (AActor* Enemigo : GM->EnemigosActivos)
+		{
+			if (!IsValid(Enemigo)) continue;
 
-            DrawLine(X - 15, Y - 15, X + 15, Y - 15, FLinearColor::Red, 2.5f);
-            DrawLine(X - 15, Y + 15, X + 15, Y + 15, FLinearColor::Red, 2.5f);
-            DrawLine(X - 15, Y - 15, X - 15, Y + 15, FLinearColor::Red, 2.5f);
-            DrawLine(X + 15, Y - 15, X + 15, Y + 15, FLinearColor::Red, 2.5f);
+			FVector2D PosPantalla;
+			bool bProyectado = PC->ProjectWorldLocationToScreen(Enemigo->GetActorLocation(), PosPantalla);
+			float X, Y;
+			if (bProyectado)
+			{
+				X = FMath::Clamp(PosPantalla.X, 30.0f, AnchoPantalla - 30.0f);
+				Y = FMath::Clamp(PosPantalla.Y, 30.0f, AltoPantalla - 30.0f);
+			}
+			else
+			{
+				X = AnchoPantalla / 2.0f;
+				Y = AltoPantalla / 2.0f;
+			}
 
-            FString NombreClase = Enemigo->GetClass()->GetName();
-            NombreClase.RemoveFromEnd("_C");
-            DrawText(NombreClase, FLinearColor::Red, X - 35.0f, Y - 35.0f, FuentePrincipal, true);
-        }
-    }
-    else if (VidaReal <= 0.0f && VidasRestantes > 0)
-    {
-        DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.6f), 0.0f, 0.0f, AnchoPantalla, AltoPantalla);
-        DrawText(TEXT("REBUILDING SHIP..."), FLinearColor::Yellow, (AnchoPantalla / 2.0f) - 250.0f, (AltoPantalla / 2.0f) - 50.0f, FuentePrincipal, true);
-    }
-    else if (VidasRestantes <= 0)
-    {
-        DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.9f), 0.0f, 0.0f, AnchoPantalla, AltoPantalla);
-        float CX = AnchoPantalla / 2.0f;
-        float CY = AltoPantalla / 2.0f;
-        DrawText(TEXT("GAME OVER"), FLinearColor::Red, CX - 150.0f, CY - 50.0f, FuentePrincipal, true);
-        DrawText(FString::Printf(TEXT("FINAL SCORE: %d"), Puntos), FLinearColor::Yellow, CX - 150.0f, CY + 20.0f, FuentePrincipal, true);
-    }
+			DrawLine(X - 15, Y - 15, X + 15, Y - 15, FLinearColor::Red, 2.5f);
+			DrawLine(X - 15, Y + 15, X + 15, Y + 15, FLinearColor::Red, 2.5f);
+			DrawLine(X - 15, Y - 15, X - 15, Y + 15, FLinearColor::Red, 2.5f);
+			DrawLine(X + 15, Y - 15, X + 15, Y + 15, FLinearColor::Red, 2.5f);
+
+			FString NombreClase = Enemigo->GetClass()->GetName();
+			NombreClase.RemoveFromEnd("_C");
+			DrawText(NombreClase, FLinearColor::Red, X - 35.0f, Y - 35.0f, FuentePrincipal, true);
+		}
+	}
+	else if (VidaReal <= 0.0f && VidasRestantes > 0)
+	{
+		DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.6f), 0.0f, 0.0f, AnchoPantalla, AltoPantalla);
+		DrawText(TEXT("REBUILDING SHIP..."), FLinearColor::Yellow, (AnchoPantalla / 2.0f) - 250.0f, (AltoPantalla / 2.0f) - 50.0f, FuentePrincipal, true);
+	}
+	else if (VidasRestantes <= 0)
+	{
+		DrawRect(FLinearColor(0.0f, 0.0f, 0.0f, 0.9f), 0.0f, 0.0f, AnchoPantalla, AltoPantalla);
+		float CX = AnchoPantalla / 2.0f;
+		float CY = AltoPantalla / 2.0f;
+		DrawText(TEXT("GAME OVER"), FLinearColor::Red, CX - 150.0f, CY - 50.0f, FuentePrincipal, true);
+		DrawText(FString::Printf(TEXT("FINAL SCORE: %d"), Puntos), FLinearColor::Yellow, CX - 150.0f, CY + 20.0f, FuentePrincipal, true);
+	}
 }

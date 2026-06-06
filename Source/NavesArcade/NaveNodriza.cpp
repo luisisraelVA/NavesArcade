@@ -1,4 +1,10 @@
+Ôªø#include "NaveNodriza.h"
+#include "Components/SphereComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Kismet/GameplayStatics.h"
 #include "NaveNodriza.h"
+#include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
@@ -8,31 +14,33 @@
 #include "NaveAcechadora.h"
 #include "LevelBuilder.h"
 #include "NavesArcadeGameMode.h"
+#include "GameAssets.h"
 
 ANaveNodriza::ANaveNodriza()
 {
     PrimaryActorTick.bCanEverTick = true;
 
+    // Esfera ra√≠z grande y que bloquea al jugador
+    EsferaColision->SetSphereRadius(500.0f);
+    EsferaColision->SetCollisionProfileName(TEXT("BlockAll"));
+    EsferaColision->SetGenerateOverlapEvents(true);
+
     MallaJefe = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaJefe"));
-    RootComponent = MallaJefe;
+    MallaJefe->SetupAttachment(RootComponent);
+    MallaJefe->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    MallaJefe->SetGenerateOverlapEvents(false);
 
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("StaticMesh'/Game/MESH/Defender-class.Defender-class'"));
-    if (CubeMesh.Succeeded())
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshObj(GameAssets::MallaNaveNodriza);
+    if (MeshObj.Succeeded())
     {
-        MallaJefe->SetStaticMesh(CubeMesh.Object);
-        MallaJefe->SetRelativeScale3D(FVector(5.0f, 5.0f, 5.0f));
+        MallaJefe->SetStaticMesh(MeshObj.Object);
+        MallaJefe->SetRelativeScale3D(FVector(8.0f));
+        MallaJefe->SetRelativeRotation(FRotator(0, -90, 0));
     }
-    SetActorScale3D(FVector(5.0f, 5.0f, 5.0f));
 
-    // ========== VISIBILIDAD Y MATERIAL ==========
-    MallaJefe->SetMaterial(0, UMaterial::GetDefaultMaterial(MD_Surface));
-    MallaJefe->SetVisibility(true);
-    SetActorHiddenInGame(false);
-    // ============================================
-
-    MallaJefe->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-    MallaJefe->SetGenerateOverlapEvents(true);
-    MallaJefe->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    static ConstructorHelpers::FObjectFinder<UParticleSystem> ParticulaAsset(
+        TEXT("ParticleSystem'/Game/StarterContent/Particles/P_Explosion.P_Explosion'"));
+    if (ParticulaAsset.Succeeded()) EfectoMuerteMasiva = ParticulaAsset.Object;
 
     VidaMaxima = 800.0f;
     VidaActual = VidaMaxima;
@@ -40,11 +48,8 @@ ANaveNodriza::ANaveNodriza()
     bMuerto = false;
     AnguloEspiralAcumulado = 0.0f;
     bEsNivelNueve = false;
-
-    static ConstructorHelpers::FObjectFinder<UParticleSystem> ParticulaAsset(TEXT("ParticleSystem'/Game/StarterContent/Particles/P_Explosion.P_Explosion'"));
-    if (ParticulaAsset.Succeeded()) EfectoMuerteMasiva = ParticulaAsset.Object;
-    else EfectoMuerteMasiva = nullptr;
 }
+
 
 void ANaveNodriza::BeginPlay()
 {
@@ -61,11 +66,10 @@ void ANaveNodriza::BeginPlay()
         default: VidaMaxima = 800.0f; break;
         }
 
-        // Si es nivel 12, reducimos la vida para que sea m·s r·pida (opcional)
         if (GameMode->GetNivelActual() == 12)
         {
             VidaMaxima = 400.0f;
-            bEsNivelNueve = true; // Activa el ataque espiral en nivel 12
+            bEsNivelNueve = true;
         }
 
         VidaActual = VidaMaxima;
@@ -73,12 +77,10 @@ void ANaveNodriza::BeginPlay()
 
     if (bEsNivelNueve)
     {
-        // Ataque espiral r·pido (cada 0.08 segundos)
         GetWorldTimerManager().SetTimer(TimerDisparoAbanico, this, &ANaveNodriza::DispararEspiralHelicoidal, 0.08f, true, 1.0f);
     }
     else
     {
-        // Ataque en abanico normal (cada 1.5 segundos)
         GetWorldTimerManager().SetTimer(TimerDisparoAbanico, this, &ANaveNodriza::DispararAbanico, 1.5f, true, 1.0f);
     }
 }
@@ -93,10 +95,11 @@ void ANaveNodriza::Tick(float DeltaTime)
     {
         FVector Direccion = (Jugador->GetActorLocation() - GetActorLocation()).GetSafeNormal();
         AddActorWorldOffset(Direccion * 150.0f * DeltaTime);
+
         FRotator RotObjetivo = Direccion.Rotation();
-        RotObjetivo.Pitch -= 90.0f;
         SetActorRotation(FMath::RInterpTo(GetActorRotation(), RotObjetivo, DeltaTime, 2.0f));
     }
+
     AddActorWorldOffset(FVector(0.0f, 0.0f, FMath::Sin(GetWorld()->GetTimeSeconds() * 2.0f) * 80.0f * DeltaTime));
 
     if (VidaActual <= VidaMaxima / 2.0f && !bFaseDos)
@@ -104,7 +107,6 @@ void ANaveNodriza::Tick(float DeltaTime)
         bFaseDos = true;
         if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("NODRIZA ENFURECIDA!"));
 
-        // No invocar kamikazes en nivel 12
         ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
         if (GM && GM->GetNivelActual() != 12)
         {
@@ -124,6 +126,7 @@ void ANaveNodriza::DispararAbanico()
         FVector Origen = GetActorLocation() + Rotacion.Vector() * 600.0f;
         FActorSpawnParameters SpawnParams;
         SpawnParams.Instigator = this;
+        SpawnParams.Owner = this;
         SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
         GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), Origen, Rotacion, SpawnParams);
     }
@@ -139,6 +142,7 @@ void ANaveNodriza::DispararEspiralHelicoidal()
     FVector Origen = GetActorLocation() + RotacionProyectil.Vector() * 400.0f;
     FActorSpawnParameters SpawnParams;
     SpawnParams.Instigator = this;
+    SpawnParams.Owner = this;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), Origen, RotacionProyectil, SpawnParams);
 }
@@ -146,19 +150,26 @@ void ANaveNodriza::DispararEspiralHelicoidal()
 void ANaveNodriza::InvocarKamikaze()
 {
     if (bMuerto) return;
-    FVector SpawnLoc = GetActorLocation() + FVector(FMath::RandRange(-500.0f, 500.0f), 0.0f, -600.0f);
+    float Angulo = FMath::RandRange(0.0f, 360.0f);
+    float Distancia = FMath::RandRange(400.0f, 700.0f);
+    FVector Offset = FVector(
+        FMath::Cos(FMath::DegreesToRadians(Angulo)) * Distancia,
+        FMath::Sin(FMath::DegreesToRadians(Angulo)) * Distancia,
+        FMath::RandRange(-200.0f, 200.0f)
+    );
+
+    FVector SpawnLoc = GetActorLocation() + Offset;
     ANaveAcechadora* Kamikaze = GetWorld()->SpawnActor<ANaveAcechadora>(ANaveAcechadora::StaticClass(), SpawnLoc, FRotator::ZeroRotator);
-    if (Kamikaze) Kamikaze->SetActorScale3D(FVector(1.2f, 1.2f, 1.2f));
+    if (Kamikaze) Kamikaze->SetActorScale3D(FVector(1.2f));
 }
 
 void ANaveNodriza::RecibirDano(float Dano)
 {
-    GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("Nodriza recibe daÒo: %.1f"), Dano));
-
+    GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("Nodriza recibe da√±o: %.1f"), Dano));
     if (bMuerto) return;
     VidaActual -= Dano;
-    SetActorScale3D(FVector(4.8f, 4.8f, 4.8f));
-    GetWorldTimerManager().SetTimer(TimerHitFlash, this, &ANaveNodriza::RestaurarMaterial, 0.1f, false);
+
+    // Sin cambios de tama√±o
     if (VidaActual <= 0.0f)
     {
         bMuerto = true;
@@ -176,7 +187,7 @@ void ANaveNodriza::RecibirDano(float Dano)
 
 void ANaveNodriza::RestaurarMaterial()
 {
-    if (!bMuerto) SetActorScale3D(FVector(5.0f, 5.0f, 5.0f));
+    // Sin cambios de escala
 }
 
 void ANaveNodriza::FinalizarMuerteCinematica()
@@ -187,7 +198,5 @@ void ANaveNodriza::FinalizarMuerteCinematica()
 
 void ANaveNodriza::Destroyed()
 {
-    ALevelBuilder* Builder = Cast<ALevelBuilder>(UGameplayStatics::GetActorOfClass(GetWorld(), ALevelBuilder::StaticClass()));
-    if (Builder) Builder->NotificarMuerteEnemigo();
     Super::Destroyed();
 }

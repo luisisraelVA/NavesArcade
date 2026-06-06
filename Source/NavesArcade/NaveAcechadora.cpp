@@ -1,52 +1,38 @@
 #include "NaveAcechadora.h"
-#include "Kismet/GameplayStatics.h"
-#include "UObject/ConstructorHelpers.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SceneComponent.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Kismet/GameplayStatics.h"
 #include "NaveJugador.h"
 #include "LevelBuilder.h"
 #include "NavesArcadeGameMode.h"
-#include "Proyectil.h"   // Para spawnear proyectiles
+#include "Proyectil.h"
+#include "GameAssets.h"
+#include "Components/SphereComponent.h"
 
 ANaveAcechadora::ANaveAcechadora()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    // Esfera heredada
+    EsferaColision->SetSphereRadius(80.0f);
 
     MallaEnemigo = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaEnemigo"));
-    RootComponent = MallaEnemigo;
-    MallaEnemigo->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-    MallaEnemigo->SetGenerateOverlapEvents(true);
+    MallaEnemigo->SetupAttachment(RootComponent);
+    MallaEnemigo->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    MallaEnemigo->SetGenerateOverlapEvents(false);
 
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> ConoMesh(TEXT("StaticMesh'/Game/MESH/hal2_Box002.hal2_Box002'"));
-    if (ConoMesh.Succeeded())
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshObj(GameAssets::MallaAcechadora);
+    if (MeshObj.Succeeded())
     {
-        MallaEnemigo->SetStaticMesh(ConoMesh.Object);
-        MallaEnemigo->SetRelativeScale3D(FVector(5.0f, 5.0f, 5.0f));
-    }
-    else
-    {
-        static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(TEXT("StaticMesh'/Game/MESH/space_mouse_fbx.space_mouse_fbx'"));
-        if (CylinderMesh.Succeeded()) MallaEnemigo->SetStaticMesh(CylinderMesh.Object);
+        MallaEnemigo->SetStaticMesh(MeshObj.Object);
+        MallaEnemigo->SetRelativeScale3D(FVector(0.8f));
+        MallaEnemigo->SetRelativeRotation(FRotator(0, 90, 0));
     }
 
     VelocidadPersecucion = 350.0f;
-    CadenciaDisparo = 1.2f;   // Dispara cada 1.2 segundos
+    CadenciaDisparo = 1.2f;
+    Salud = 30.0f;
     Tags.Add(FName("Enemy"));
     TargetJugador = nullptr;
-}
-
-void ANaveAcechadora::BeginPlay()
-{
-    Super::BeginPlay();
-    TargetJugador = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-
-    // Iniciar el temporizador de disparos
-    if (TargetJugador)
-    {
-        GetWorldTimerManager().SetTimer(TimerDisparo, this, &ANaveAcechadora::Disparar, CadenciaDisparo, true);
-    }
-
-    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
-    if (GM) GM->RegistrarEnemigo(this);
 }
 
 void ANaveAcechadora::Tick(float DeltaTime)
@@ -57,12 +43,13 @@ void ANaveAcechadora::Tick(float DeltaTime)
 
     float Distancia = FVector::Dist(GetActorLocation(), TargetJugador->GetActorLocation());
 
-    // Movimiento de persecución
+    FVector Direccion = (TargetJugador->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+    FRotator RotacionObjetivo = Direccion.Rotation();
+    SetActorRotation(FMath::RInterpTo(GetActorRotation(), RotacionObjetivo, DeltaTime, 4.0f));
+
+
     if (Distancia > 800.0f)
     {
-        FVector Direccion = (TargetJugador->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-        FRotator RotacionObjetivo = Direccion.Rotation();
-        SetActorRotation(FMath::RInterpTo(GetActorRotation(), RotacionObjetivo, DeltaTime, 4.0f));
         AddActorWorldOffset(GetActorForwardVector() * VelocidadPersecucion * DeltaTime);
     }
     else
@@ -70,47 +57,46 @@ void ANaveAcechadora::Tick(float DeltaTime)
         AddActorWorldOffset(GetActorForwardVector() * (VelocidadPersecucion * 1.2f) * DeltaTime);
     }
 
-    // Movimiento vertical flotante
     AddActorWorldOffset(FVector(0.0f, 0.0f, FMath::Sin(GetWorld()->GetTimeSeconds() * 8.0f) * 60.0f * DeltaTime));
 
-    // ========== ATAQUE KAMIKAZE (muerte al chocar) ==========
     if (Distancia < 600.0f)
     {
         ANaveJugador* Jugador = Cast<ANaveJugador>(TargetJugador);
         if (Jugador)
         {
-            Jugador->RecibirDano(25.0f);   // Daño al jugador
-            Destroy();                      // La nave acechadora se destruye
+            Jugador->RecibirDano(25.0f);
+            Destroy();
         }
     }
 }
 
+
+void ANaveAcechadora::BeginPlay()
+{
+    Super::BeginPlay();         // registra en GameMode
+    TargetJugador = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+
+    if (TargetJugador)
+    {
+        GetWorldTimerManager().SetTimer(TimerDisparo, this, &ANaveAcechadora::Disparar, CadenciaDisparo, true);
+    }
+}
 void ANaveAcechadora::Disparar()
 {
     if (!TargetJugador) return;
 
-    // Calcular dirección hacia el jugador
     FVector Direccion = (TargetJugador->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-    // Origen del disparo (delante de la nave)
     FVector Origen = GetActorLocation() + Direccion * 150.0f;
 
     FActorSpawnParameters SpawnParams;
     SpawnParams.Owner = this;
+    SpawnParams.Instigator = this;          // <-- AÑADIR
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
     GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), Origen, Direccion.Rotation(), SpawnParams);
 }
 
 void ANaveAcechadora::Destroyed()
 {
-    // Limpiar el temporizador de disparos
     GetWorldTimerManager().ClearTimer(TimerDisparo);
-
-    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
-    if (GM) GM->DesregistrarEnemigo(this);
-
-    ALevelBuilder* Builder = Cast<ALevelBuilder>(UGameplayStatics::GetActorOfClass(GetWorld(), ALevelBuilder::StaticClass()));
-    if (Builder) Builder->NotificarMuerteEnemigo();
-
-    Super::Destroyed();
+    Super::Destroyed();  
 }

@@ -1,10 +1,21 @@
 #include "AsteroideDinamico.h"
+#include "GameAssets.h"       
+#include "Components/StaticMeshComponent.h"
 
 AAsteroideDinamico::AAsteroideDinamico()
 {
     PrimaryActorTick.bCanEverTick = true;
     VelocidadMovimiento = 500.0f;
     DireccionMovimiento = FVector(-1.0f, 0.0f, 0.0f);
+
+    // Reemplazar la malla base por la nueva
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> NuevaMalla(GameAssets::MallaAsteroideDinamico);
+    if (NuevaMalla.Succeeded())
+    {
+        MallaAsteroide->SetStaticMesh(NuevaMalla.Object);
+        MallaAsteroide->SetRelativeScale3D(FVector(0.5f, 0.5f, 0.5f));  
+      
+    }
 }
 
 void AAsteroideDinamico::Tick(float DeltaTime)

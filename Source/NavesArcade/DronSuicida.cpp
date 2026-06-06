@@ -1,44 +1,39 @@
 #include "DronSuicida.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
 #include "NaveJugador.h"
-#include "NavesArcadeGameMode.h"
-#include "LevelBuilder.h"
+#include "GameAssets.h"
 
 ADronSuicida::ADronSuicida()
 {
-    PrimaryActorTick.bCanEverTick = true;
-
-    EsferaColision = CreateDefaultSubobject<USphereComponent>(TEXT("EsferaColision"));
-    RootComponent = EsferaColision;
-    EsferaColision->InitSphereRadius(50.0f);
-    EsferaColision->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+    // Configurar esfera heredada
+    EsferaColision->SetSphereRadius(50.0f);
     EsferaColision->SetGenerateOverlapEvents(true);
 
     Malla = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Malla"));
     Malla->SetupAttachment(RootComponent);
     Malla->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMesh(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMesh(GameAssets::MallaDronSuicida);
     if (SphereMesh.Succeeded())
     {
         Malla->SetStaticMesh(SphereMesh.Object);
-        Malla->SetRelativeScale3D(FVector(0.6f, 0.6f, 0.6f));
+        Malla->SetRelativeScale3D(FVector(0.6f));
     }
 
-    Tags.Add(FName("Enemy"));
+    VelocidadCarga = 700.0f;
+    DistanciaDeteccion = 2000.0f;
+    DanoExplosion = 50.0f;
+    bActivado = false;
 }
 
 void ADronSuicida::BeginPlay()
 {
     Super::BeginPlay();
-
     Objetivo = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
     EsferaColision->OnComponentBeginOverlap.AddDynamic(this, &ADronSuicida::AlImpactar);
-
-    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
-    if (GM) GM->RegistrarEnemigo(this);
 }
 
 void ADronSuicida::Tick(float DeltaTime)
@@ -56,9 +51,7 @@ void ADronSuicida::Tick(float DeltaTime)
     }
 }
 
-void ADronSuicida::AlImpactar(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-    bool bFromSweep, const FHitResult& SweepResult)
+void ADronSuicida::AlImpactar(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
     if (!OtherActor || OtherActor == this) return;
 
@@ -68,20 +61,4 @@ void ADronSuicida::AlImpactar(UPrimitiveComponent* OverlappedComponent, AActor* 
         Jugador->RecibirDano(DanoExplosion);
         Destroy();
     }
-}
-
-void ADronSuicida::Destroyed()
-{
-    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
-    if (GM) GM->DesregistrarEnemigo(this);
-
-    ALevelBuilder* Builder = Cast<ALevelBuilder>(UGameplayStatics::GetActorOfClass(GetWorld(), ALevelBuilder::StaticClass()));
-    if (Builder) Builder->NotificarMuerteEnemigo();
-
-    Super::Destroyed();
-}
-
-void ADronSuicida::RecibirDano(float Cantidad)
-{
-    Destroy();
 }

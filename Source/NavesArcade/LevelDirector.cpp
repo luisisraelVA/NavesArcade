@@ -1,5 +1,11 @@
 #include "LevelDirector.h"
 #include "LevelBuilder.h"
+#include "EnemyFactory.h"
+#include "DronSuicida.h"
+#include "NaveElite.h"
+#include "Kismet/GameplayStatics.h"
+#include "NavesArcadeGameMode.h"
+#include "Engine/World.h"
 
 ALevelDirector::ALevelDirector()
 {
@@ -11,11 +17,166 @@ ALevelDirector::ALevelDirector()
 void ALevelDirector::SetBuilder(ALevelBuilder* NuevoBuilder)
 {
     Builder = NuevoBuilder;
+    if (Builder)
+    {
+        Builder->OnGenerarFase.BindUObject(this, &ALevelDirector::ManejarGeneracionFase);
+    }
 }
 
 void ALevelDirector::SetDificultad(EDificultad NuevaDificultad)
 {
     Dificultad = NuevaDificultad;
+}
+
+void ALevelDirector::ManejarGeneracionFase(int32 FaseActual)
+{
+    if (!Builder || !GetWorld()) return;
+
+    APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+    if (!PlayerPawn) return;
+
+    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
+    if (!GM) return;
+
+    int32 NivelActual = GM->GetNivelActual();
+    int32 NucleosRequeridos = GM->GetNucleosRequeridos();
+    bool bEsUltimaFase = (FaseActual == NucleosRequeridos - 1);
+
+    FVector UbicacionBase = PlayerPawn->GetActorLocation() + (PlayerPawn->GetActorForwardVector() * 8000.0f);
+    UbicacionBase += FVector(0.0f, FMath::RandRange(-3000.0f, 3000.0f), FMath::RandRange(-2000.0f, 2000.0f));
+    int32 NumEnemigos = 0;
+
+    // ========== NIVEL 12: JEFE + ENEMIGOS ALREDEDOR DEL JUGADOR ==========
+    if (NivelActual == 12)
+    {
+        // Primera fase: aparece el jefe lejos y los escoltas rodean al jugador
+        if (!Builder->GetJefeAparecido())
+        {
+            Builder->SetJefeAparecido(true);
+            // Jefe delante del jugador (posición original)
+            UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Boss, UbicacionBase + FVector(2000.0f, 0.0f, 0.0f));
+
+            // Escoltas alrededor del jugador, no cerca del jefe
+            int32 NumEscoltas = 7;
+            for (int32 i = 0; i < NumEscoltas; i++)
+            {
+                float Angulo = FMath::RandRange(0.0f, 360.0f);
+                float Distancia = FMath::RandRange(2500.0f, 4000.0f);
+                FVector Offset = FVector(
+                    FMath::Cos(FMath::DegreesToRadians(Angulo)) * Distancia,
+                    FMath::Sin(FMath::DegreesToRadians(Angulo)) * Distancia,
+                    FMath::RandRange(-500.0f, 500.0f)
+                );
+                FVector PosEnemigo = PlayerPawn->GetActorLocation() + Offset;
+                UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Hunter, PosEnemigo);
+            }
+            Builder->RegistrarEnemigos(1 + NumEscoltas);
+        }
+        // Después de derrotar al jefe, siguen apareciendo enemigos alrededor del jugador
+        else
+        {
+            // REUTILIZAR la variable NumEnemigos ya declarada arriba (no volver a declararla)
+            NumEnemigos = 0;
+
+            if (bEsUltimaFase)
+            {
+                NumEnemigos = 6 + FaseActual;
+                for (int32 i = 0; i < NumEnemigos; i++)
+                {
+                    float Angulo = FMath::RandRange(0.0f, 360.0f);
+                    float Distancia = FMath::RandRange(2000.0f, 3500.0f);
+                    FVector Offset = FVector(
+                        FMath::Cos(FMath::DegreesToRadians(Angulo)) * Distancia,
+                        FMath::Sin(FMath::DegreesToRadians(Angulo)) * Distancia,
+                        FMath::RandRange(-500.0f, 500.0f)
+                    );
+                    FVector Pos = PlayerPawn->GetActorLocation() + Offset;
+                    UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Elite, Pos);
+                }
+            }
+            else
+            {
+                NumEnemigos = 3 + FaseActual + (NivelActual / 2);
+                for (int32 i = 0; i < NumEnemigos; i++)
+                {
+                    float Angulo = FMath::RandRange(0.0f, 360.0f);
+                    float Distancia = FMath::RandRange(2000.0f, 3500.0f);
+                    FVector Offset = FVector(
+                        FMath::Cos(FMath::DegreesToRadians(Angulo)) * Distancia,
+                        FMath::Sin(FMath::DegreesToRadians(Angulo)) * Distancia,
+                        FMath::RandRange(-500.0f, 500.0f)
+                    );
+                    FVector Pos = PlayerPawn->GetActorLocation() + Offset;
+                    UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Sentry, Pos);
+                }
+            }
+            Builder->RegistrarEnemigos(NumEnemigos);
+        }
+        return;
+    }
+
+    // ========== NIVELES 1 AL 11 ==========
+    if (bEsUltimaFase)
+    {
+        Builder->SetJefeAparecido(true);
+
+        if (NivelActual == 9)
+        {
+            int32 Escoltas = 12;
+            NumEnemigos = 1 + Escoltas;
+            UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Boss, UbicacionBase + FVector(2000.0f, 0.0f, 0.0f));
+            for (int32 i = 0; i < Escoltas; i++)
+            {
+                FVector PosEnemigo = UbicacionBase + FVector(FMath::RandRange(-2000.f, 2000.f), FMath::RandRange(-1800.f, 1800.f), FMath::RandRange(-1000.f, 1000.f));
+                if (i % 2 == 0) UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Hunter, PosEnemigo);
+                else UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Sentry, PosEnemigo);
+            }
+        }
+        else if (NivelActual == 10)
+        {
+            int32 Escoltas = 3 + (NivelActual - 1);
+            NumEnemigos = Escoltas + 5;
+            for (int32 i = 0; i < NumEnemigos; i++)
+            {
+                FVector Pos = UbicacionBase + FVector(FMath::RandRange(-2000.f, 2000.f), FMath::RandRange(-1800.f, 1800.f), FMath::RandRange(-1000.f, 1000.f));
+                UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Suicide, Pos);
+            }
+        }
+        else if (NivelActual == 11)
+        {
+            int32 Escoltas = 3 + (NivelActual - 1);
+            NumEnemigos = Escoltas + 5;
+            for (int32 i = 0; i < NumEnemigos; i++)
+            {
+                FVector Pos = UbicacionBase + FVector(FMath::RandRange(-2000.f, 2000.f), FMath::RandRange(-1800.f, 1800.f), FMath::RandRange(-1000.f, 1000.f));
+                UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Elite, Pos);
+            }
+        }
+        else
+        {
+            NumEnemigos = 3 + (NivelActual - 1);
+            for (int32 i = 0; i < NumEnemigos; i++)
+            {
+                FVector Pos = UbicacionBase + FVector(FMath::RandRange(-2000.f, 2000.f), FMath::RandRange(-1800.f, 1800.f), FMath::RandRange(-1000.f, 1000.f));
+                if (i % 2 == 0) UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Hunter, Pos);
+                else UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Sentry, Pos);
+            }
+        }
+    }
+    else
+    {
+        NumEnemigos = 3 + FaseActual + (NivelActual / 2);
+        for (int32 i = 0; i < NumEnemigos; i++)
+        {
+            FVector Pos = UbicacionBase + FVector(FMath::RandRange(-1500.f, 1500.f), FMath::RandRange(-1500.f, 1500.f), FMath::RandRange(-800.f, 800.f));
+
+            if (NivelActual == 10) UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Suicide, Pos);
+            else if (NivelActual == 11) UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Elite, Pos);
+            else UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Sentry, Pos);
+        }
+    }
+
+    Builder->RegistrarEnemigos(NumEnemigos);
 }
 
 void ALevelDirector::ConstruirNivel1()

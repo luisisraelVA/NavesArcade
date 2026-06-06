@@ -2,10 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "LevelFab.h"
+#include "EnemigoBase.h" // Usamos la clase base
 #include "LevelBuilder.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnNucleoRecolectadoSignature);
+
+// Delegado nativo C++ puro para avisar al Director
+DECLARE_DELEGATE_OneParam(FOnGenerarFaseSignature, int32 /*FaseActual*/);
 
 UCLASS()
 class NAVESARCADE_API ALevelBuilder : public AActor
@@ -16,17 +19,22 @@ public:
     ALevelBuilder();
     virtual void BeginPlay() override;
 
-    void SetFabrica(TScriptInterface<ILevelFab> NuevaFabrica);
     void SetClaseAsteroide(TSubclassOf<class AAsteroideBase> NuevaClase);
     void SpawnAsteroides(int32 Cantidad, float VelocidadAsteroide);
+
     void GenerarFaseObjetivo();
     void NotificarMuerteEnemigo();
+    void RegistrarEnemigos(int32 Cantidad);
 
-    bool bNucleoPendiente;   // Flag para evitar múltiples núcleos
+    bool bNucleoPendiente;
 
-    // Observer
     UPROPERTY(BlueprintAssignable, Category = "Eventos Avanzados")
     FOnNucleoRecolectadoSignature OnNucleoRecolectado;
+
+    FOnGenerarFaseSignature OnGenerarFase;
+
+    void SetJefeAparecido(bool bEstado) { bJefeAparecido = bEstado; }
+    bool GetJefeAparecido() const { return bJefeAparecido; }
 
 protected:
     UFUNCTION()
@@ -35,7 +43,6 @@ protected:
 private:
     void SpawnNucleo();
 
-    TScriptInterface<ILevelFab> FabricaDeFase;
     TSubclassOf<class AAsteroideBase> ClaseAsteroide;
     TSubclassOf<class ANucleoEnergia> ClaseEnergia;
 

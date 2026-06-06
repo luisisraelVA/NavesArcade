@@ -1,17 +1,14 @@
 #pragma once
-
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "EnemigoBase.h"
 #include "NaveElite.generated.h"
 
 UCLASS()
-class NAVESARCADE_API ANaveElite : public AActor
+class NAVESARCADE_API ANaveElite : public AEnemigoBase
 {
     GENERATED_BODY()
-
 public:
     ANaveElite();
-
 protected:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
@@ -20,19 +17,9 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes")
     class UStaticMeshComponent* Malla;
 
-    UPROPERTY(EditAnywhere, Category = "Combate")
-    float Escudo;
-
-    UPROPERTY(EditAnywhere, Category = "Combate")
-    float Salud;
+    FTimerHandle TimerDisparo;
+    void Disparar();
 
     UPROPERTY()
     class APawn* Jugador;
-
-    FTimerHandle TimerDisparo;
-
-    void Disparar();
-
-public:
-    void RecibirDano(float Cantidad);
 };

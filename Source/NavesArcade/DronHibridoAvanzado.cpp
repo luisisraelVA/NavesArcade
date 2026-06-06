@@ -6,34 +6,39 @@
 #include "NaveJugador.h"
 #include "NavesArcadeGameMode.h"
 #include "LevelBuilder.h"
+#include "Components/SphereComponent.h"
+#include "GameAssets.h"
 
 ADronHibridoAvanzado::ADronHibridoAvanzado()
 {
     PrimaryActorTick.bCanEverTick = true;
 
-    Malla = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Malla"));
-    RootComponent = Malla;
-    Malla->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-    Malla->SetGenerateOverlapEvents(true);
+    // Esfera heredada
+    EsferaColision->SetSphereRadius(80.0f);
 
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Engine/BasicShapes/Cube.Cube"));
-    if (MeshAsset.Succeeded())
+    Malla = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Malla"));
+    Malla->SetupAttachment(RootComponent);
+    Malla->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshObj(GameAssets::MallaDronHibrido);
+    if (MeshObj.Succeeded())
     {
-        Malla->SetStaticMesh(MeshAsset.Object);
-        Malla->SetRelativeScale3D(FVector(0.8f, 0.8f, 0.8f));
+        Malla->SetStaticMesh(MeshObj.Object);
+        Malla->SetRelativeScale3D(FVector(0.6f));
+        Malla->SetRelativeRotation(FRotator(0, 90, 0));
     }
 
+    Salud = 25.0f;
     Tags.Add(FName("Enemy"));
+    VelocidadMovimiento = 400.0f;
+    DistanciaDisparo = 1200.0f;
 }
 
 void ADronHibridoAvanzado::BeginPlay()
 {
-    Super::BeginPlay();
+    Super::BeginPlay();   // registra en GameMode
     Objetivo = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
     GetWorldTimerManager().SetTimer(TimerDisparo, this, &ADronHibridoAvanzado::DispararRafaga, 2.0f, true, 1.0f);
-
-    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
-    if (GM) GM->RegistrarEnemigo(this);
 }
 
 void ADronHibridoAvanzado::Tick(float DeltaTime)
@@ -59,22 +64,14 @@ void ADronHibridoAvanzado::DispararRafaga()
         Rot.Yaw += i * 15.0f;
         FActorSpawnParameters Params;
         Params.Owner = this;
+        Params.Instigator = this;           // <-- AÑADIR
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
         GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), Origen, Rot, Params);
     }
 }
 
 void ADronHibridoAvanzado::Destroyed()
 {
-    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
-    if (GM) GM->DesregistrarEnemigo(this);
-
-    ALevelBuilder* Builder = Cast<ALevelBuilder>(UGameplayStatics::GetActorOfClass(GetWorld(), ALevelBuilder::StaticClass()));
-    if (Builder) Builder->NotificarMuerteEnemigo();
-
-    Super::Destroyed();
-}
-
-void ADronHibridoAvanzado::RecibirDano(float Cantidad)
-{
-    Destroy();
+    GetWorldTimerManager().ClearTimer(TimerDisparo);
+    Super::Destroyed();   // desregistro y notificación automática
 }

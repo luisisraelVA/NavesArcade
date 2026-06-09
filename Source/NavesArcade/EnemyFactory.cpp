@@ -22,7 +22,7 @@ AActor* UEnemyFactory::SpawnEnemy(UWorld* World, EEnemyType Type, FVector Locati
     case EEnemyType::Sentry:  ClaseAInstanciar = ADronCentinela::StaticClass(); break;
     case EEnemyType::Hunter:  ClaseAInstanciar = ANaveAcechadora::StaticClass(); break;
     case EEnemyType::Boss:    ClaseAInstanciar = ANaveNodriza::StaticClass(); break;
-    case EEnemyType::Hybrid:  ClaseAInstanciar = ADronHibridoAvanzado::StaticClass(); break;
+    case EEnemyType::Hibrido:  ClaseAInstanciar = ADronHibridoAvanzado::StaticClass(); break;
     case EEnemyType::Suicide: ClaseAInstanciar = ADronSuicida::StaticClass(); break;
     case EEnemyType::Elite:   ClaseAInstanciar = ANaveElite::StaticClass(); break;
     }

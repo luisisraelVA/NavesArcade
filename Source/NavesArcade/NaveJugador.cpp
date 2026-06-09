@@ -150,6 +150,9 @@ void ANaveJugador::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
     PlayerInputComponent->BindAction("CerrarJuego", IE_Pressed, this, &ANaveJugador::SalirDelJuego);
     FInputActionBinding& PausaBinding = PlayerInputComponent->BindAction("PausarJuego", IE_Pressed, this, &ANaveJugador::TogglePausa);
     PausaBinding.bExecuteWhenPaused = true;
+
+    FInputActionBinding& MenuBinding = PlayerInputComponent->BindAction("VolverMenu", IE_Pressed, this, &ANaveJugador::VolverAlMenu);
+    MenuBinding.bExecuteWhenPaused = true; // ¡Importante! Funciona aunque el juego esté en pausa
 }
 
 void ANaveJugador::InicializarDisparo()
@@ -311,4 +314,14 @@ void ANaveJugador::TogglePausa()
         
         UGameplayStatics::SetGamePaused(GetWorld(), !bEstaPausado);
     }
+}
+
+void ANaveJugador::VolverAlMenu()
+{
+    // 1. Quitamos la pausa para que el motor pueda cambiar de nivel sin errores
+    UGameplayStatics::SetGamePaused(GetWorld(), false);
+
+    // 2. Cargamos el mapa del menú. 
+    // Asegúrate de que el nombre coincida exactamente con cómo lo tienes en el Content Browser
+    UGameplayStatics::OpenLevel(GetWorld(), FName("MapaMenu"));
 }

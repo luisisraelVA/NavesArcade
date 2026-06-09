@@ -18,8 +18,13 @@ ADronSuicida::ADronSuicida()
     static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMesh(GameAssets::MallaDronSuicida);
     if (SphereMesh.Succeeded())
     {
-        Malla->SetStaticMesh(SphereMesh.Object);
-        Malla->SetRelativeScale3D(FVector(0.6f));
+      
+            Malla->SetStaticMesh(SphereMesh.Object);
+            // Ajusta la escala si la nave no se ve bien
+            Malla->SetRelativeScale3D(FVector(0.08f));
+            // Ajusta la rotación si la nave no mira hacia adelante
+            Malla->SetRelativeRotation(FRotator(0, -90, 0));
+       
     }
 
     VelocidadCarga = 700.0f;

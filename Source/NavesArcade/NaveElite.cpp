@@ -18,8 +18,8 @@ ANaveElite::ANaveElite()
     if (CuboMesh.Succeeded())
     {
         Malla->SetStaticMesh(CuboMesh.Object);
-        Malla->SetRelativeScale3D(FVector(1.2f));
-        Malla->SetRelativeRotation(FRotator(0, 90, 0));
+        Malla->SetRelativeScale3D(FVector(1.0f));
+        Malla->SetRelativeRotation(FRotator(0, 0, 0));
     }
 
     Escudo = 30.0f;

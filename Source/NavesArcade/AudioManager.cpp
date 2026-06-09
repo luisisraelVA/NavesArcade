@@ -1,12 +1,16 @@
 #include "AudioManager.h"
 #include "Kismet/GameplayStatics.h"
-#include "Sound/SoundWave.h" // AÑADE ESTO ARRIBA
+#include "Sound/SoundWave.h" 
 #include "Sound/SoundBase.h"
+#include "Components/AudioComponent.h"
 
 UAudioManager::UAudioManager()
 {
     PrimaryComponentTick.bCanEverTick = false;
 
+
+    MusicaComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("MusicaComponent"));
+    MusicaComponent->bAutoActivate = false; 
     // DISPAROS
     static ConstructorHelpers::FObjectFinder<USoundBase> AudioDisparoObj(TEXT("SoundWave'/Game/Sonidos/SonidoNaveJugador.SonidoNaveJugador'"));
     if (AudioDisparoObj.Succeeded()) SonidoDisparo = AudioDisparoObj.Object;
@@ -33,6 +37,7 @@ UAudioManager::UAudioManager()
         {
             WaveMusica->bLooping = true; // Esto hace que se repita para siempre
         }
+
     }
 
     // GAME OVER Y MENOS VIDA
@@ -101,7 +106,15 @@ void UAudioManager::PlaySoundImpacto()
 
 void UAudioManager::PlaySoundMusicaFondo()
 {
-    if (MusicaFondo) UGameplayStatics::PlaySound2D(this, MusicaFondo, 0.4f); // Volumen al 40%
+    if (MusicaFondo && MusicaComponent)
+    {
+        // Si no está sonando, lo configuramos y lo ponemos en Play
+        if (!MusicaComponent->IsPlaying())
+        {
+            MusicaComponent->SetSound(MusicaFondo);
+            MusicaComponent->Play();
+        }
+    }
 }
 
 void UAudioManager::PlaySoundRecogerNucleo()

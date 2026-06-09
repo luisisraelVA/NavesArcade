@@ -62,4 +62,8 @@ protected:
 
     UPROPERTY(EditAnywhere, Category = "Sonidos")
     USoundBase* SonidoChoqueEnemigo; 
+
+    UPROPERTY(VisibleAnywhere, Category = "Audio")
+    class UAudioComponent* MusicaComponent;
+
 };

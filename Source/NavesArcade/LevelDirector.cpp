@@ -1,324 +1,104 @@
 #include "LevelDirector.h"
 #include "LevelBuilder.h"
 #include "EnemyFactory.h"
-#include "DronSuicida.h"
-#include "NaveElite.h"
 #include "Kismet/GameplayStatics.h"
 #include "NavesArcadeGameMode.h"
 #include "Engine/World.h"
 
-ALevelDirector::ALevelDirector()
-{
+ALevelDirector::ALevelDirector() {
     PrimaryActorTick.bCanEverTick = false;
     Builder = nullptr;
     Dificultad = EDificultad::Medio;
 }
 
-void ALevelDirector::SetBuilder(ALevelBuilder* NuevoBuilder)
-{
+void ALevelDirector::SetBuilder(ALevelBuilder* NuevoBuilder) {
     Builder = NuevoBuilder;
-    if (Builder)
-    {
-        Builder->OnGenerarFase.BindUObject(this, &ALevelDirector::ManejarGeneracionFase);
-    }
+    if (Builder) Builder->OnGenerarFase.BindUObject(this, &ALevelDirector::ManejarGeneracionFase);
 }
 
-void ALevelDirector::SetDificultad(EDificultad NuevaDificultad)
-{
-    Dificultad = NuevaDificultad;
-}
+void ALevelDirector::SetDificultad(EDificultad NuevaDificultad) { Dificultad = NuevaDificultad; }
 
 void ALevelDirector::ManejarGeneracionFase(int32 FaseActual)
 {
     if (!Builder || !GetWorld()) return;
+    Builder->ResetEnemigos();
 
     APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-    if (!PlayerPawn) return;
-
     ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
-    if (!GM) return;
+    if (!PlayerPawn || !GM) return;
 
+    FVector PosicionJugador = PlayerPawn->GetActorLocation();
+    FVector Forward = PlayerPawn->GetActorForwardVector();
+    float Distancia = 8000.0f;
     int32 NivelActual = GM->GetNivelActual();
-    int32 NucleosRequeridos = GM->GetNucleosRequeridos();
-    bool bEsUltimaFase = (FaseActual == NucleosRequeridos - 1);
+    int32 NumEnemigos = 8 + (FaseActual * 2) + NivelActual;
 
-    FVector UbicacionBase = PlayerPawn->GetActorLocation() + (PlayerPawn->GetActorForwardVector() * 8000.0f);
-    UbicacionBase += FVector(0.0f, FMath::RandRange(-3000.0f, 3000.0f), FMath::RandRange(-2000.0f, 2000.0f));
-    int32 NumEnemigos = 0;
-
-    // ========== NIVEL 12: JEFE + ENEMIGOS ALREDEDOR DEL JUGADOR ==========
+    // --- LÓGICA NIVEL 12 (BOSS) ---
     if (NivelActual == 12)
     {
-        // Primera fase: aparece el jefe lejos y los escoltas rodean al jugador
         if (!Builder->GetJefeAparecido())
         {
             Builder->SetJefeAparecido(true);
-            // Jefe delante del jugador (posición original)
-            UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Boss, UbicacionBase + FVector(2000.0f, 0.0f, 0.0f));
-
-            // Escoltas alrededor del jugador, no cerca del jefe
-            int32 NumEscoltas = 7;
-            for (int32 i = 0; i < NumEscoltas; i++)
-            {
-                float Angulo = FMath::RandRange(0.0f, 360.0f);
-                float Distancia = FMath::RandRange(2500.0f, 4000.0f);
-                FVector Offset = FVector(
-                    FMath::Cos(FMath::DegreesToRadians(Angulo)) * Distancia,
-                    FMath::Sin(FMath::DegreesToRadians(Angulo)) * Distancia,
-                    FMath::RandRange(-500.0f, 500.0f)
-                );
-                FVector PosEnemigo = PlayerPawn->GetActorLocation() + Offset;
-                UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Hunter, PosEnemigo);
-            }
-            Builder->RegistrarEnemigos(1 + NumEscoltas);
+            UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Boss, PosicionJugador + (Forward * Distancia));
+            // Escoltas esparcidos
+            for (int32 i = 0; i < 10; i++)
+                UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Hunter, PosicionJugador + (Forward * Distancia) + FVector(FMath::RandRange(-6000, 6000), FMath::RandRange(-6000, 6000), 0));
+            NumEnemigos = 11;
         }
-        // Después de derrotar al jefe, siguen apareciendo enemigos alrededor del jugador
-        else
-        {
-            // REUTILIZAR la variable NumEnemigos ya declarada arriba (no volver a declararla)
-            NumEnemigos = 0;
-
-            if (bEsUltimaFase)
-            {
-                NumEnemigos = 6 + FaseActual;
-                for (int32 i = 0; i < NumEnemigos; i++)
-                {
-                    float Angulo = FMath::RandRange(0.0f, 360.0f);
-                    float Distancia = FMath::RandRange(2000.0f, 3500.0f);
-                    FVector Offset = FVector(
-                        FMath::Cos(FMath::DegreesToRadians(Angulo)) * Distancia,
-                        FMath::Sin(FMath::DegreesToRadians(Angulo)) * Distancia,
-                        FMath::RandRange(-500.0f, 500.0f)
-                    );
-                    FVector Pos = PlayerPawn->GetActorLocation() + Offset;
-                    UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Elite, Pos);
-                }
-            }
-            else
-            {
-                NumEnemigos = 3 + FaseActual + (NivelActual / 2);
-                for (int32 i = 0; i < NumEnemigos; i++)
-                {
-                    float Angulo = FMath::RandRange(0.0f, 360.0f);
-                    float Distancia = FMath::RandRange(2000.0f, 3500.0f);
-                    FVector Offset = FVector(
-                        FMath::Cos(FMath::DegreesToRadians(Angulo)) * Distancia,
-                        FMath::Sin(FMath::DegreesToRadians(Angulo)) * Distancia,
-                        FMath::RandRange(-500.0f, 500.0f)
-                    );
-                    FVector Pos = PlayerPawn->GetActorLocation() + Offset;
-                    UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Sentry, Pos);
-                }
-            }
-            Builder->RegistrarEnemigos(NumEnemigos);
-        }
-        return;
+        else NumEnemigos = 15; // Post-jefe
     }
 
-    // ========== NIVELES 1 AL 11 ==========
-    if (bEsUltimaFase)
+    // --- GENERACIÓN DE ENEMIGOS SEGÚN NIVEL ---
+    for (int32 i = 0; i < NumEnemigos; i++)
     {
-        Builder->SetJefeAparecido(true);
+        EEnemyType Tipo;
+        int32 Rand = FMath::RandRange(0, 100);
 
-        if (NivelActual == 9)
-        {
-            int32 Escoltas = 12;
-            NumEnemigos = 1 + Escoltas;
-            UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Boss, UbicacionBase + FVector(2000.0f, 0.0f, 0.0f));
-            for (int32 i = 0; i < Escoltas; i++)
-            {
-                FVector PosEnemigo = UbicacionBase + FVector(FMath::RandRange(-2000.f, 2000.f), FMath::RandRange(-1800.f, 1800.f), FMath::RandRange(-1000.f, 1000.f));
-                if (i % 2 == 0) UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Hunter, PosEnemigo);
-                else UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Sentry, PosEnemigo);
-            }
-        }
-        else if (NivelActual == 10)
-        {
-            int32 Escoltas = 3 + (NivelActual - 1);
-            NumEnemigos = Escoltas + 5;
-            for (int32 i = 0; i < NumEnemigos; i++)
-            {
-                FVector Pos = UbicacionBase + FVector(FMath::RandRange(-2000.f, 2000.f), FMath::RandRange(-1800.f, 1800.f), FMath::RandRange(-1000.f, 1000.f));
-                UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Suicide, Pos);
-            }
-        }
-        else if (NivelActual == 11)
-        {
-            int32 Escoltas = 3 + (NivelActual - 1);
-            NumEnemigos = Escoltas + 5;
-            for (int32 i = 0; i < NumEnemigos; i++)
-            {
-                FVector Pos = UbicacionBase + FVector(FMath::RandRange(-2000.f, 2000.f), FMath::RandRange(-1800.f, 1800.f), FMath::RandRange(-1000.f, 1000.f));
-                UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Elite, Pos);
-            }
-        }
-        else
-        {
-            NumEnemigos = 3 + (NivelActual - 1);
-            for (int32 i = 0; i < NumEnemigos; i++)
-            {
-                FVector Pos = UbicacionBase + FVector(FMath::RandRange(-2000.f, 2000.f), FMath::RandRange(-1800.f, 1800.f), FMath::RandRange(-1000.f, 1000.f));
-                if (i % 2 == 0) UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Hunter, Pos);
-                else UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Sentry, Pos);
-            }
-        }
-    }
-    else
-    {
-        NumEnemigos = 3 + FaseActual + (NivelActual / 2);
-        for (int32 i = 0; i < NumEnemigos; i++)
-        {
-            FVector Pos = UbicacionBase + FVector(FMath::RandRange(-1500.f, 1500.f), FMath::RandRange(-1500.f, 1500.f), FMath::RandRange(-800.f, 800.f));
+        if (NivelActual <= 3) // 1 al 3: Centinelas y Suicidas
+            Tipo = (Rand < 50) ? EEnemyType::Sentry : EEnemyType::Suicide;
 
-            if (NivelActual == 10) UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Suicide, Pos);
-            else if (NivelActual == 11) UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Elite, Pos);
-            else UEnemyFactory::SpawnEnemy(GetWorld(), EEnemyType::Sentry, Pos);
+        else if (NivelActual <= 6) // 4 al 6: Acechadoras, Suicidas y Centinelas
+        {
+            if (Rand < 33) Tipo = EEnemyType::Hunter;
+            else if (Rand < 66) Tipo = EEnemyType::Suicide;
+            else Tipo = EEnemyType::Sentry;
         }
+
+        else if (NivelActual <= 9) // 7 al 9: Elite y Suicidas
+            Tipo = (Rand < 50) ? EEnemyType::Elite : EEnemyType::Suicide;
+
+        else // 10 al 11: Híbrida, Elite y Suicidas
+        {
+            if (Rand < 33) Tipo = EEnemyType::Hibrido;
+            else if (Rand < 66) Tipo = EEnemyType::Elite;
+            else Tipo = EEnemyType::Suicide;
+        }
+
+        // Spawn con posición aleatoria
+        FVector Pos = PosicionJugador + (Forward * Distancia) + FVector(FMath::RandRange(-3000, 3000), FMath::RandRange(-2000, 2000), 0);
+        UEnemyFactory::SpawnEnemy(GetWorld(), Tipo, Pos);
     }
 
     Builder->RegistrarEnemigos(NumEnemigos);
 }
-
-void ALevelDirector::ConstruirNivel1()
+void ALevelDirector::ConfigurarDificultad(float& Velocidad, int32& Cantidad)
 {
-    if (!Builder) return;
-    float VelocidadBase = 600.0f;
-    int32 CantidadBase = 80;
-    switch (Dificultad)
-    {
-    case EDificultad::Facil:   VelocidadBase = 450.0f; CantidadBase = 60; break;
-    case EDificultad::Medio:   VelocidadBase = 600.0f; CantidadBase = 80; break;
-    case EDificultad::Dificil: VelocidadBase = 750.0f; CantidadBase = 100; break;
+    switch (Dificultad) {
+    case EDificultad::Facil:   Velocidad *= 0.8f; Cantidad = (int32)(Cantidad * 0.75f); break;
+    case EDificultad::Dificil: Velocidad *= 1.25f; Cantidad = (int32)(Cantidad * 1.25f); break;
+    default: break;
     }
-    Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
 }
 
-void ALevelDirector::ConstruirNivel2()
-{
-    if (!Builder) return;
-    float VelocidadBase = 850.0f;
-    int32 CantidadBase = 120;
-    switch (Dificultad)
-    {
-    case EDificultad::Facil:   VelocidadBase = 700.0f; CantidadBase = 90; break;
-    case EDificultad::Medio:   VelocidadBase = 850.0f; CantidadBase = 120; break;
-    case EDificultad::Dificil: VelocidadBase = 1000.0f; CantidadBase = 150; break;
-    }
-    Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
-}
-
-void ALevelDirector::ConstruirNivel3()
-{
-    if (!Builder) return;
-    float VelocidadBase = 1100.0f;
-    int32 CantidadBase = 180;
-    switch (Dificultad)
-    {
-    case EDificultad::Facil:   VelocidadBase = 900.0f; CantidadBase = 140; break;
-    case EDificultad::Medio:   VelocidadBase = 1100.0f; CantidadBase = 180; break;
-    case EDificultad::Dificil: VelocidadBase = 1300.0f; CantidadBase = 220; break;
-    }
-    Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
-}
-
-void ALevelDirector::ConstruirNivel4()
-{
-    if (!Builder) return;
-    Builder->SpawnAsteroides(220, 1400.0f);
-}
-
-void ALevelDirector::ConstruirNivel5()
-{
-    if (!Builder) return;
-    Builder->SpawnAsteroides(260, 1600.0f);
-}
-
-void ALevelDirector::ConstruirNivel6()
-{
-    if (!Builder) return;
-    Builder->SpawnAsteroides(300, 1800.0f);
-}
-
-void ALevelDirector::ConstruirNivel7()
-{
-    if (!Builder) return;
-    float VelocidadBase = 2000.0f;
-    int32 CantidadBase = 340;
-    switch (Dificultad)
-    {
-    case EDificultad::Facil:   VelocidadBase = 1600.0f; CantidadBase = 260; break;
-    case EDificultad::Medio:   VelocidadBase = 2000.0f; CantidadBase = 340; break;
-    case EDificultad::Dificil: VelocidadBase = 2400.0f; CantidadBase = 400; break;
-    }
-    Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
-}
-
-void ALevelDirector::ConstruirNivel8()
-{
-    if (!Builder) return;
-    float VelocidadBase = 2200.0f;
-    int32 CantidadBase = 380;
-    switch (Dificultad)
-    {
-    case EDificultad::Facil:   VelocidadBase = 1800.0f; CantidadBase = 300; break;
-    case EDificultad::Medio:   VelocidadBase = 2200.0f; CantidadBase = 380; break;
-    case EDificultad::Dificil: VelocidadBase = 2600.0f; CantidadBase = 450; break;
-    }
-    Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
-}
-
-void ALevelDirector::ConstruirNivel9()
-{
-    if (!Builder) return;
-    float VelocidadBase = 2400.0f;
-    int32 CantidadBase = 420;
-    switch (Dificultad)
-    {
-    case EDificultad::Facil:   VelocidadBase = 2000.0f; CantidadBase = 350; break;
-    case EDificultad::Medio:   VelocidadBase = 2400.0f; CantidadBase = 420; break;
-    case EDificultad::Dificil: VelocidadBase = 2800.0f; CantidadBase = 500; break;
-    }
-    Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
-}
-
-void ALevelDirector::ConstruirNivel10()
-{
-    if (!Builder) return;
-    float VelocidadBase = 2600.0f;
-    int32 CantidadBase = 460;
-    switch (Dificultad)
-    {
-    case EDificultad::Facil:   VelocidadBase = 2200.0f; CantidadBase = 400; break;
-    case EDificultad::Medio:   VelocidadBase = 2600.0f; CantidadBase = 460; break;
-    case EDificultad::Dificil: VelocidadBase = 3000.0f; CantidadBase = 550; break;
-    }
-    Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
-}
-
-void ALevelDirector::ConstruirNivel11()
-{
-    if (!Builder) return;
-    float VelocidadBase = 2800.0f;
-    int32 CantidadBase = 500;
-    switch (Dificultad)
-    {
-    case EDificultad::Facil:   VelocidadBase = 2400.0f; CantidadBase = 450; break;
-    case EDificultad::Medio:   VelocidadBase = 2800.0f; CantidadBase = 500; break;
-    case EDificultad::Dificil: VelocidadBase = 3200.0f; CantidadBase = 600; break;
-    }
-    Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
-}
-
-void ALevelDirector::ConstruirNivel12()
-{
-    if (!Builder) return;
-    float VelocidadBase = 3000.0f;
-    int32 CantidadBase = 550;
-    switch (Dificultad)
-    {
-    case EDificultad::Facil:   VelocidadBase = 2600.0f; CantidadBase = 500; break;
-    case EDificultad::Medio:   VelocidadBase = 3000.0f; CantidadBase = 550; break;
-    case EDificultad::Dificil: VelocidadBase = 3500.0f; CantidadBase = 650; break;
-    }
-    Builder->SpawnAsteroides(CantidadBase, VelocidadBase);
-}
+void ALevelDirector::ConstruirNivel1() { float V = 600; int32 C = 80; ConfigurarDificultad(V, C); Builder->SpawnAsteroides(C, V); }
+void ALevelDirector::ConstruirNivel2() { float V = 850; int32 C = 120; ConfigurarDificultad(V, C); Builder->SpawnAsteroides(C, V); }
+void ALevelDirector::ConstruirNivel3() { float V = 1100; int32 C = 180; ConfigurarDificultad(V, C); Builder->SpawnAsteroides(C, V); }
+void ALevelDirector::ConstruirNivel4() { float V = 1400; int32 C = 220; ConfigurarDificultad(V, C); Builder->SpawnAsteroides(C, V); }
+void ALevelDirector::ConstruirNivel5() { float V = 1600; int32 C = 260; ConfigurarDificultad(V, C); Builder->SpawnAsteroides(C, V); }
+void ALevelDirector::ConstruirNivel6() { float V = 1800; int32 C = 300; ConfigurarDificultad(V, C); Builder->SpawnAsteroides(C, V); }
+void ALevelDirector::ConstruirNivel7() { float V = 2000; int32 C = 340; ConfigurarDificultad(V, C); Builder->SpawnAsteroides(C, V); }
+void ALevelDirector::ConstruirNivel8() { float V = 2200; int32 C = 380; ConfigurarDificultad(V, C); Builder->SpawnAsteroides(C, V); }
+void ALevelDirector::ConstruirNivel9() { float V = 2400; int32 C = 420; ConfigurarDificultad(V, C); Builder->SpawnAsteroides(C, V); }
+void ALevelDirector::ConstruirNivel10() { float V = 2600; int32 C = 460; ConfigurarDificultad(V, C); Builder->SpawnAsteroides(C, V); }
+void ALevelDirector::ConstruirNivel11() { float V = 2800; int32 C = 500; ConfigurarDificultad(V, C); Builder->SpawnAsteroides(C, V); }
+void ALevelDirector::ConstruirNivel12() { float V = 3000; int32 C = 550; ConfigurarDificultad(V, C); Builder->SpawnAsteroides(C, V); }

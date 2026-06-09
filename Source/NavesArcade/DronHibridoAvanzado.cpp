@@ -23,8 +23,10 @@ ADronHibridoAvanzado::ADronHibridoAvanzado()
     if (MeshObj.Succeeded())
     {
         Malla->SetStaticMesh(MeshObj.Object);
-        Malla->SetRelativeScale3D(FVector(0.6f));
-        Malla->SetRelativeRotation(FRotator(0, 90, 0));
+
+        Malla->SetRelativeScale3D(FVector(0.08f));
+
+        Malla->SetRelativeRotation(FRotator(0, -90, 0));
     }
 
     Salud = 25.0f;

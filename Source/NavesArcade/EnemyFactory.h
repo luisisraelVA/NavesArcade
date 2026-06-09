@@ -5,14 +5,8 @@
 #include "EnemyFactory.generated.h"
 
 UENUM(BlueprintType)
-enum class EEnemyType : uint8
-{
-    Sentry      UMETA(DisplayName = "Sentry"),
-    Hunter      UMETA(DisplayName = "Hunter"),
-    Boss        UMETA(DisplayName = "Boss"),
-    Hybrid      UMETA(DisplayName = "Hybrid"),
-    Suicide     UMETA(DisplayName = "Suicide"),
-    Elite       UMETA(DisplayName = "Elite")      
+enum class EEnemyType : uint8 {
+    Sentry, Suicide, Elite, Hunter, Hibrido, Boss 
 };
 
 UCLASS()

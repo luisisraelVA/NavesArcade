@@ -190,4 +190,14 @@ void ADodgerHUD::DrawHUD()
         float AlphaPortal = FMath::Abs(FMath::Sin(GetWorld()->GetTimeSeconds() * 4.0f));
         DrawText(TEXT("¡PORTAL ABIERTO - ESCAPA!"), FLinearColor(0.0f, 1.0f, 0.0f, AlphaPortal), CentroPantallaX - 180.0f, 90.0f, FuenteUsar, 1.5f);
     }
+
+
+    if (UGameplayStatics::IsGamePaused(GetWorld()))
+    {
+        DrawText(TEXT("PAUSA - PRESIONA P PARA SEGUIR | M PARA VOLVER AL MENU"),
+            FLinearColor::Yellow,
+            ScreenX / 2.0f - 300.0f,
+            ScreenY / 2.0f,
+            FuenteUsar, 1.2f);
+    }
 }

@@ -50,7 +50,7 @@ void ANucleoEnergia::AlSuperponerse(UPrimitiveComponent* OverlappedComponent, AA
 		Jugador->RecolectarEnergia(1.0f);
 
 		ALevelBuilder* Builder = Cast<ALevelBuilder>(UGameplayStatics::GetActorOfClass(GetWorld(), ALevelBuilder::StaticClass()));
-		if (Builder) Builder->bNucleoPendiente = false;
+		if (Builder) Builder->SetNucleoPendiente(false);
 
 		Destroy(); // Ahora sí podemos destruir el núcleo tranquilos
 	}

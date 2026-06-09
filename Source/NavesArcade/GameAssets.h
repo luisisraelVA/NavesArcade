@@ -9,10 +9,11 @@ namespace GameAssets
     const TCHAR* const MallaDronCentinela = TEXT("StaticMesh'/Game/MallasFinales/nave-modelo.nave-modelo'");
     const TCHAR* const MallaProyectil = TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'");
     const TCHAR* const MallaNaveNodriza = TEXT("StaticMesh'/Game/MallasFinales/nodriza/p_887_spaceStation_spaceship_002_low.p_887_spaceStation_spaceship_002_low'");
-    const TCHAR* const MallaNaveElite = TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'");
+    const TCHAR* const MallaNaveElite = TEXT("StaticMesh'/Game/MESH/Defender-class.Defender-class'");
+    // ...
     const TCHAR* const MallaAcechadora = TEXT("StaticMesh'/Game/MallasFinales/SpaceShip.SpaceShip'");    
-    const TCHAR* const MallaDronSuicida = TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'");
-    const TCHAR* const MallaDronHibrido = TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'");
+    const TCHAR* const MallaDronSuicida = TEXT("StaticMesh'/Game/MESH/SpaceShip.SpaceShip'");
+    const TCHAR* const MallaDronHibrido = TEXT("StaticMesh'/Game/MESH/space_mouse_fbx.space_mouse_fbx'");
 
     // --- Entorno y Asteroides ---
     const TCHAR* const MallaAsteroideDinamico = TEXT("StaticMesh'/Game/MallasFinales/Sketchfab_2018_05_04_09_18_34.Sketchfab_2018_05_04_09_18_34'");

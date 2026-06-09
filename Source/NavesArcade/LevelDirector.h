@@ -2,17 +2,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "LevelBuilder.h"
 #include "LevelDirector.generated.h"
 
 
+
 UENUM(BlueprintType)
-enum class EDificultad : uint8
-{
-    Facil      UMETA(DisplayName = "Fácil"),
-    Medio      UMETA(DisplayName = "Medio"),
-    Dificil    UMETA(DisplayName = "Difícil")
+enum class EDificultad : uint8 {
+    Facil, Medio, Dificil
 };
+
+class ALevelBuilder;
 
 UCLASS()
 class NAVESARCADE_API ALevelDirector : public AActor
@@ -21,10 +20,10 @@ class NAVESARCADE_API ALevelDirector : public AActor
 
 public:
     ALevelDirector();
-
     void SetBuilder(ALevelBuilder* NuevoBuilder);
     void SetDificultad(EDificultad NuevaDificultad);
 
+    // Funciones de construcción
     void ConstruirNivel1();
     void ConstruirNivel2();
     void ConstruirNivel3();
@@ -38,9 +37,15 @@ public:
     void ConstruirNivel11();
     void ConstruirNivel12();
 
-private:
+protected:
+    UFUNCTION()
     void ManejarGeneracionFase(int32 FaseActual);
 
+    UPROPERTY()
     ALevelBuilder* Builder;
+
     EDificultad Dificultad;
+
+private:
+    void ConfigurarDificultad(float& Velocidad, int32& Cantidad);
 };

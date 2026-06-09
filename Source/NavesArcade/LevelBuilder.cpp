@@ -113,3 +113,13 @@ void ALevelBuilder::GeneracionContinua()
         }
     }
 }
+
+void ALevelBuilder::ResetEnemigos()
+{
+    EnemigosVivosEnSector = 0;
+}
+
+void ALevelBuilder::SetNucleoPendiente(bool bEstado)
+{
+    bNucleoPendiente = bEstado;
+}

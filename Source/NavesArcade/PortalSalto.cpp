@@ -52,7 +52,9 @@ void APortalSalto::NotifyActorBeginOverlap(AActor* OtherActor)
 	if (!Nave) return;
 
 	ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
-	int32 Requeridos = GM ? GM->GetNucleosRequeridos() : 1;
+	if (!GM) return;
+
+	int32 Requeridos = GM->GetNucleosRequeridos();
 	int32 Nucleos = Nave->GetNucleosRecolectados();
 
 	if (Nucleos >= Requeridos)
@@ -60,7 +62,27 @@ void APortalSalto::NotifyActorBeginOverlap(AActor* OtherActor)
 		bViajeIniciado = true;
 		SetActorEnableCollision(false);
 
-		if (GM) GM->AvanzarSiguienteNivel();
-		else UGameplayStatics::OpenLevel(GetWorld(), FName("Nivel-01"));
+		int32 NivelActual = GM->GetNivelActual();
+
+	
+		if (NivelActual >= 12)
+		{
+			if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("¡Misión completa! Volviendo al menú..."));
+			UGameplayStatics::OpenLevel(GetWorld(), FName("MapaMenu"));
+		}
+		else
+		{
+		
+			GM->AvanzarSiguienteNivel();
+		}
+	}
+	else
+	{
+
+		if (GEngine)
+		{
+			FString Mensaje = FString::Printf(TEXT("¡Necesitas %d núcleos para saltar!"), Requeridos);
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, Mensaje);
+		}
 	}
 }

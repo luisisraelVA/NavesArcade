@@ -61,6 +61,9 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Combate")
     TSubclassOf<AProyectil> ClaseProyectil;
 
+
+    void VolverAlMenu();
+
     void InicializarDisparo();
     void MoverAdelante(float Valor);
     void MoverDerecha(float Valor);
@@ -86,4 +89,6 @@ private:
     
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes", meta = (AllowPrivateAccess = "true"))
     UAudioManager* ComponenteAudio;
+
+
 };

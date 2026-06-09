@@ -2,7 +2,7 @@
 #include "CoreMinimal.h"
 #include "EnemigoBase.h"
 #include "DronCentinela.generated.h"
-
+class UAudioManager;
 UCLASS()
 class NAVESARCADE_API ADronCentinela : public AEnemigoBase
 {
@@ -22,6 +22,9 @@ protected:
 
     UPROPERTY()
     AActor* ObjetivoActual;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes")
+    UAudioManager* ComponenteAudio;
 
     FTimerHandle TimerCicloDisparo;
     void EjecutarDisparoLaser();

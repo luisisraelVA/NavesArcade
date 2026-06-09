@@ -47,7 +47,7 @@ void UNaveFacade::EjecutarDisparo()
 
 	float TiempoActual = GetWorld()->GetTimeSeconds();
 
-	// OPTIMIZADO: Usamos la variable nativa de la clase, eliminando el error de 'static'
+	
 	if (TiempoActual < UltimoTiempoDisparo) UltimoTiempoDisparo = 0.0f;
 	if (TiempoActual - UltimoTiempoDisparo < 0.3f) return;
 	UltimoTiempoDisparo = TiempoActual;

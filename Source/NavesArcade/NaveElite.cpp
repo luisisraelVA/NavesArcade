@@ -51,7 +51,7 @@ void ANaveElite::Disparar()
 
     FActorSpawnParameters Params;
     Params.Owner = this;
-    Params.Instigator = this;               // <-- AÑADIR
+    Params.Instigator = this;               
     Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), Origen, Dir.Rotation(), Params);
 }

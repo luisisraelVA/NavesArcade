@@ -8,7 +8,7 @@
 
 APortalSalto::APortalSalto()
 {
-	PrimaryActorTick.bCanEverTick = false; // Apagamos el tick
+	PrimaryActorTick.bCanEverTick = false; 
 	bViajeIniciado = false;
 
 	EsferaColision = CreateDefaultSubobject<USphereComponent>(TEXT("EsferaColision"));

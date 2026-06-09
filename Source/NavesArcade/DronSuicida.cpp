@@ -8,7 +8,6 @@
 
 ADronSuicida::ADronSuicida()
 {
-    // Configurar esfera heredada
     EsferaColision->SetSphereRadius(50.0f);
     EsferaColision->SetGenerateOverlapEvents(true);
 

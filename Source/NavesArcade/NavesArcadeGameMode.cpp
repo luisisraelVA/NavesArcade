@@ -9,19 +9,70 @@
 #include "AsteroideFractal.h"
 #include "NucleoEnergia.h"
 #include "PortalSalto.h"
+#include "Blueprint/UserWidget.h" // Necesario para la Interfaz
 
 ANavesArcadeGameMode::ANavesArcadeGameMode()
 {
     DefaultPawnClass = ANaveJugador::StaticClass();
     HUDClass = ADodgerHUD::StaticClass();
     NivelActual = 1;
-    NucleosRequeridos = 3;       
+    NucleosRequeridos = 3;
 }
 
 void ANavesArcadeGameMode::BeginPlay()
 {
     Super::BeginPlay();
 
+    // 1. Obtenemos el nombre del mapa y lo limpiamos de prefijos (ej. UEDPIE_0_MapaMenu)
+    FString NombreMapa = GetWorld()->GetMapName();
+    NombreMapa.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
+
+    // =========================================================
+        // RUTA A: ESTAMOS EN EL MENÚ PRINCIPAL
+        // =========================================================
+    if (NombreMapa.Contains("MapaMenu")) // <-- ¡Comprueba que el nombre del mapa coincida!
+    {
+        if (ClaseMenuWidget)
+        {
+            UUserWidget* MenuActual = CreateWidget<UUserWidget>(GetWorld(), ClaseMenuWidget);
+            if (MenuActual)
+            {
+                MenuActual->AddToViewport();
+
+                APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+                if (PC)
+                {
+                    // --- ESTA ES LA LÍNEA CRUCIAL PARA BORRAR EL SCORE ---
+                    if (PC->GetHUD())
+                    {
+                        PC->GetHUD()->bShowHUD = false; // Desactivar el dibujo nativo del HUD
+                    }
+                    // ---------------------------------------------------
+
+                    PC->bShowMouseCursor = true;
+                    FInputModeUIOnly ModoInput;
+                    ModoInput.SetWidgetToFocus(MenuActual->TakeWidget());
+                    PC->SetInputMode(ModoInput);
+                }
+            }
+        }
+
+        return; // ¡No olvides este return! Detiene el código aquí y no crea Builder/Director.
+    }
+
+    // =========================================================
+    // RUTA B: ESTAMOS JUGANDO UN NIVEL NORMAL
+    // =========================================================
+
+    // Ocultamos el mouse y devolvemos el control a la nave
+    APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    if (PC)
+    {
+        PC->bShowMouseCursor = false;
+        PC->SetInputMode(FInputModeGameOnly());
+    }
+
+    // Instanciamos la arquitectura Builder/Director
     FVector PosicionBuilder = FVector(1500.0f, 0.0f, 0.0f);
     InstanciaBuilder = GetWorld()->SpawnActor<ALevelBuilder>(ALevelBuilder::StaticClass(), PosicionBuilder, FRotator::ZeroRotator);
     InstanciaDirector = GetWorld()->SpawnActor<ALevelDirector>(ALevelDirector::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator);
@@ -31,8 +82,7 @@ void ANavesArcadeGameMode::BeginPlay()
         InstanciaDirector->SetBuilder(InstanciaBuilder);
         InstanciaDirector->SetDificultad(DificultadActual);
 
-        FString NombreMapa = GetWorld()->GetMapName();
-        NombreMapa.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
+        // Detectamos en qué nivel estamos
         if (NombreMapa.StartsWith("Nivel-"))
         {
             FString NumStr = NombreMapa.RightChop(6);
@@ -50,7 +100,6 @@ void ANavesArcadeGameMode::BeginPlay()
 
 void ANavesArcadeGameMode::ActualizarRequerimientoPorNivel()
 {
-    // Solo el nivel 12 necesita 1 núcleo; los demás mantienen su cantidad original
     if (NivelActual == 12)
     {
         NucleosRequeridos = 1;
@@ -59,7 +108,7 @@ void ANavesArcadeGameMode::ActualizarRequerimientoPorNivel()
     else if (NivelActual <= 4) NucleosRequeridos = 4;
     else if (NivelActual <= 6) NucleosRequeridos = 5;
     else if (NivelActual <= 9) NucleosRequeridos = 6;
-    else NucleosRequeridos = 7;   // Niveles 10 y 11
+    else NucleosRequeridos = 7;
 }
 
 void ANavesArcadeGameMode::CargarRecetaNivel(int32 NumeroNivel)
@@ -94,7 +143,6 @@ void ANavesArcadeGameMode::AvanzarSiguienteNivel()
     int32 ProximoNivel = NivelActual + 1;
     if (ProximoNivel > NUMERO_TOTAL_NIVELES) ProximoNivel = 1;
 
-    // EL ARREGLO: Solo usamos el nombre corto puro (ej. "Nivel-02"). Nada de rutas largas ni puntos.
     FString NombreCorto = FString::Printf(TEXT("Nivel-%02d"), ProximoNivel);
 
     if (GEngine)

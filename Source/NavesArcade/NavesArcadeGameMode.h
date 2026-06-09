@@ -29,6 +29,10 @@ public:
     UPROPERTY()
     TArray<AActor*> EnemigosActivos;
 
+    // --- VARIABLE DEL MENÚ PRINCIPAL ---
+    UPROPERTY(EditAnywhere, Category = "Feria | Interfaz")
+    TSubclassOf<class UUserWidget> ClaseMenuWidget;
+
     void RegistrarEnemigo(AActor* NuevoEnemigo) { EnemigosActivos.AddUnique(NuevoEnemigo); }
     void DesregistrarEnemigo(AActor* EnemigoMuerto) { EnemigosActivos.Remove(EnemigoMuerto); }
 

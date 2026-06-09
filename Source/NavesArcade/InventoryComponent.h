@@ -27,5 +27,5 @@ private:
     float EnergiaActual;
 
     UPROPERTY(EditAnywhere, Category = "Recursos")
-    int32 EnergiaRequeridaNivel;  // cambia a int32
+    int32 EnergiaRequeridaNivel;  
 };

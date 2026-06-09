@@ -6,14 +6,13 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "GameAssets.h"
+#include "AudioManager.h"
 #include "Components/SphereComponent.h"
 
 ADronCentinela::ADronCentinela()
 {
-    // La esfera raíz ya existe (heredada de EnemigoBase), solo ajustamos radio
-    EsferaColision->SetSphereRadius(80.0f);   // tamaño adecuado
-
-    // Malla visual (sin colisiones)
+   
+    EsferaColision->SetSphereRadius(80.0f);   
     MallaDron = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaDron"));
     MallaDron->SetupAttachment(RootComponent);
     MallaDron->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -26,6 +25,7 @@ ADronCentinela::ADronCentinela()
         MallaDron->SetRelativeScale3D(FVector(0.2f));
         MallaDron->SetRelativeRotation(FRotator(0, -90, 0));
     }
+    ComponenteAudio = CreateDefaultSubobject<UAudioManager>(TEXT("ComponenteAudio"));
 
     VelocidadPatrulla = 300.0f;
     ObjetivoActual = nullptr;
@@ -60,10 +60,15 @@ void ADronCentinela::EjecutarDisparoLaser()
     FVector Origen = GetActorLocation() + Direccion * 150.0f;
 
     FActorSpawnParameters Params;
-    Params.Owner = this;                    // <-- AÑADIR
-    Params.Instigator = this;               // <-- AÑADIR
+    Params.Owner = this;                    
+    Params.Instigator = this;               
     Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), Origen, Direccion.Rotation(), Params);
+
+    if (ComponenteAudio)
+    {
+        ComponenteAudio->PlaySoundDisparo2(); 
+    }
 }
 
 void ADronCentinela::Destroyed()

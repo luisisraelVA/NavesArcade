@@ -2,12 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "EnemigoBase.h" // Usamos la clase base
+#include "EnemigoBase.h" 
 #include "LevelBuilder.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnNucleoRecolectadoSignature);
 
-// Delegado nativo C++ puro para avisar al Director
+
 DECLARE_DELEGATE_OneParam(FOnGenerarFaseSignature, int32 /*FaseActual*/);
 
 UCLASS()

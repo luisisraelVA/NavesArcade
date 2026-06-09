@@ -5,10 +5,11 @@
 #include "LevelBuilder.h"
 #include "GameAssets.h"
 #include "NaveJugador.h"
+#include "AudioManager.h"
 
 ANucleoEnergia::ANucleoEnergia()
 {
-	PrimaryActorTick.bCanEverTick = false; // Apagamos el cerebro del actor
+	PrimaryActorTick.bCanEverTick = false; 
 
 	EsferaColision = CreateDefaultSubobject<USphereComponent>(TEXT("EsferaColision"));
 	RootComponent = EsferaColision;
@@ -39,11 +40,18 @@ void ANucleoEnergia::AlSuperponerse(UPrimitiveComponent* OverlappedComponent, AA
 	ANaveJugador* Jugador = Cast<ANaveJugador>(OtherActor);
 	if (Jugador)
 	{
+		// SOLUCIÓN: Buscamos el audio de la NAVE y hacemos que la nave haga el sonido
+		UAudioManager* AudioJugador = Cast<UAudioManager>(Jugador->GetComponentByClass(UAudioManager::StaticClass()));
+		if (AudioJugador)
+		{
+			AudioJugador->PlaySoundRecogerNucleo();
+		}
+
 		Jugador->RecolectarEnergia(1.0f);
 
 		ALevelBuilder* Builder = Cast<ALevelBuilder>(UGameplayStatics::GetActorOfClass(GetWorld(), ALevelBuilder::StaticClass()));
 		if (Builder) Builder->bNucleoPendiente = false;
 
-		Destroy();
+		Destroy(); // Ahora sí podemos destruir el núcleo tranquilos
 	}
 }

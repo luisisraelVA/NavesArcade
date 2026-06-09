@@ -5,7 +5,7 @@
 #include "LevelBuilder.h"
 #include "LevelDirector.generated.h"
 
-// Enumeración de dificultad
+
 UENUM(BlueprintType)
 enum class EDificultad : uint8
 {
@@ -39,7 +39,6 @@ public:
     void ConstruirNivel12();
 
 private:
-    // Nueva función que recibe el delegado del Builder
     void ManejarGeneracionFase(int32 FaseActual);
 
     ALevelBuilder* Builder;

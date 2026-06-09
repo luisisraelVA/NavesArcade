@@ -19,8 +19,6 @@
 ANaveNodriza::ANaveNodriza()
 {
     PrimaryActorTick.bCanEverTick = true;
-
-    // Esfera raíz grande y que bloquea al jugador
     EsferaColision->SetSphereRadius(500.0f);
     EsferaColision->SetCollisionProfileName(TEXT("BlockAll"));
     EsferaColision->SetGenerateOverlapEvents(true);
@@ -169,7 +167,7 @@ void ANaveNodriza::RecibirDano(float Dano)
     if (bMuerto) return;
     VidaActual -= Dano;
 
-    // Sin cambios de tamaño
+    
     if (VidaActual <= 0.0f)
     {
         bMuerto = true;
@@ -187,7 +185,7 @@ void ANaveNodriza::RecibirDano(float Dano)
 
 void ANaveNodriza::RestaurarMaterial()
 {
-    // Sin cambios de escala
+   
 }
 
 void ANaveNodriza::FinalizarMuerteCinematica()

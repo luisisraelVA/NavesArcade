@@ -13,7 +13,6 @@ ADronHibridoAvanzado::ADronHibridoAvanzado()
 {
     PrimaryActorTick.bCanEverTick = true;
 
-    // Esfera heredada
     EsferaColision->SetSphereRadius(80.0f);
 
     Malla = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Malla"));
@@ -36,7 +35,7 @@ ADronHibridoAvanzado::ADronHibridoAvanzado()
 
 void ADronHibridoAvanzado::BeginPlay()
 {
-    Super::BeginPlay();   // registra en GameMode
+    Super::BeginPlay();   
     Objetivo = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
     GetWorldTimerManager().SetTimer(TimerDisparo, this, &ADronHibridoAvanzado::DispararRafaga, 2.0f, true, 1.0f);
 }
@@ -64,7 +63,7 @@ void ADronHibridoAvanzado::DispararRafaga()
         Rot.Yaw += i * 15.0f;
         FActorSpawnParameters Params;
         Params.Owner = this;
-        Params.Instigator = this;           // <-- AÑADIR
+        Params.Instigator = this;           
         Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
         GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), Origen, Rot, Params);
     }
@@ -73,5 +72,5 @@ void ADronHibridoAvanzado::DispararRafaga()
 void ADronHibridoAvanzado::Destroyed()
 {
     GetWorldTimerManager().ClearTimer(TimerDisparo);
-    Super::Destroyed();   // desregistro y notificación automática
+    Super::Destroyed();   
 }

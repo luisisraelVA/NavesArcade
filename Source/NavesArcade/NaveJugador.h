@@ -12,6 +12,7 @@ class USphereComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputComponent;
+class UAudioManager; // Añade esta línea
 
 UCLASS()
 class NAVESARCADE_API ANaveJugador : public APawn
@@ -38,12 +39,13 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void Destroyed() override;
+    void SalirDelJuego();
+    void TogglePausa();
 
-    // Colisión para daño / recolección
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Colisión")
     USphereComponent* ColisionNave;
 
-    // Colisión física que bloquea contra la nodriza y otros obstáculos
+ 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Colisión")
     USphereComponent* ColisionFisica;
 
@@ -61,6 +63,7 @@ protected:
 
     void InicializarDisparo();
     void MoverAdelante(float Valor);
+    void MoverDerecha(float Valor);
     void RotarDerecha(float Valor);
     void RotarArriba(float Valor);
 
@@ -79,4 +82,8 @@ private:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes", meta = (AllowPrivateAccess = "true"))
     UNaveFacade* FachadaNave;
+
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes", meta = (AllowPrivateAccess = "true"))
+    UAudioManager* ComponenteAudio;
 };

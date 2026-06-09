@@ -12,7 +12,7 @@
 
 ANaveAcechadora::ANaveAcechadora()
 {
-    // Esfera heredada
+    
     EsferaColision->SetSphereRadius(80.0f);
 
     MallaEnemigo = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MallaEnemigo"));
@@ -90,7 +90,7 @@ void ANaveAcechadora::Disparar()
 
     FActorSpawnParameters SpawnParams;
     SpawnParams.Owner = this;
-    SpawnParams.Instigator = this;          // <-- AÑADIR
+    SpawnParams.Instigator = this;          
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), Origen, Direccion.Rotation(), SpawnParams);
 }

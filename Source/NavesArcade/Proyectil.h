@@ -18,12 +18,14 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Colision")
 	class USphereComponent* EsferaColision;
 
+	// --- VOLVEMOS A USAR STATIC MESH PARA LA VISUAL ---
 	UPROPERTY(VisibleAnywhere, Category = "Visual")
 	class UStaticMeshComponent* MallaProyectil;
 
 	UPROPERTY(VisibleAnywhere, Category = "Movimiento")
 	class UProjectileMovementComponent* MovimientoProyectil;
 
+	// Este se mantiene para la explosioncita al impactar
 	class UParticleSystem* EfectoExplosion;
 
 	UFUNCTION()

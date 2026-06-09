@@ -3,6 +3,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "TimerManager.h"
 #include "GameAssets.h"
+#include "AudioManager.h"
 #include "NaveJugador.h"
 
 AAsteroideBase::AAsteroideBase()
@@ -19,6 +20,7 @@ AAsteroideBase::AAsteroideBase()
 	MallaAsteroide->SetupAttachment(RootComponent);
 	MallaAsteroide->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+
 	DanoPorChoque = 25.0f;
 }
 
@@ -31,7 +33,6 @@ void AAsteroideBase::BeginPlay()
 	SetActorScale3D(FVector(0.01f, 0.01f, 0.01f));
 	TiempoVisual = 0.0f;
 
-	// OPTIMIZACIÓN: Alarma para despertar al asteroide justo antes de morir
 	GetWorldTimerManager().SetTimer(TimerDespertar, this, &AAsteroideBase::ReactivarTick, 10.5f, false);
 }
 
@@ -67,6 +68,13 @@ void AAsteroideBase::AlSuperponerse(UPrimitiveComponent* OverlappedComponent, AA
 		ANaveJugador* Jugador = Cast<ANaveJugador>(OtherActor);
 		if (Jugador)
 		{
+			// SOLUCIÓN: El impacto suena desde la nave justo antes de recibir el daño
+			UAudioManager* AudioJugador = Cast<UAudioManager>(Jugador->GetComponentByClass(UAudioManager::StaticClass()));
+			if (AudioJugador)
+			{
+				AudioJugador->PlaySoundImpacto();
+			}
+
 			Jugador->RecibirDano(DanoPorChoque);
 			Destroy();
 		}

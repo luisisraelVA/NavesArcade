@@ -7,11 +7,9 @@
 AEnemigoBase::AEnemigoBase()
 {
     PrimaryActorTick.bCanEverTick = true;
-
-    // Esfera raíz para todos los enemigos
     EsferaColision = CreateDefaultSubobject<USphereComponent>(TEXT("EsferaColision"));
     RootComponent = EsferaColision;
-    EsferaColision->InitSphereRadius(80.0f);                     // Ajusta según el tamaño de tus enemigos
+    EsferaColision->InitSphereRadius(80.0f);                     
     EsferaColision->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
     EsferaColision->SetGenerateOverlapEvents(true);
 

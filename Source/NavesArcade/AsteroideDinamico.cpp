@@ -8,7 +8,6 @@ AAsteroideDinamico::AAsteroideDinamico()
     VelocidadMovimiento = 500.0f;
     DireccionMovimiento = FVector(-1.0f, 0.0f, 0.0f);
 
-    // Reemplazar la malla base por la nueva
     static ConstructorHelpers::FObjectFinder<UStaticMesh> NuevaMalla(GameAssets::MallaAsteroideDinamico);
     if (NuevaMalla.Succeeded())
     {

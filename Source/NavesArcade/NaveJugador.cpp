@@ -12,8 +12,10 @@
 #include "GameAssets.h"
 #include "LevelBuilder.h"
 #include "Kismet/GameplayStatics.h"
+#include "AudioManager.h" 
 #include "TimerManager.h"
 #include "NavesArcadeGameMode.h"
+#include "GameFramework/GameUserSettings.h"
 
 ANaveJugador::ANaveJugador()
 {
@@ -30,10 +32,10 @@ ANaveJugador::ANaveJugador()
     ColisionFisica = CreateDefaultSubobject<USphereComponent>(TEXT("ColisionFisica"));
     ColisionFisica->SetupAttachment(RootComponent);
     ColisionFisica->InitSphereRadius(80.0f);
-    ColisionFisica->SetCollisionProfileName(TEXT("Pawn"));        // Bloquea contra otros pawns y objetos estáticos
+    ColisionFisica->SetCollisionProfileName(TEXT("Pawn"));    
     ColisionFisica->SetGenerateOverlapEvents(false);
 
-    // Malla esquelética (solo visual, sin colisión)
+
     MallaNave = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MallaNaveVisual"));
     MallaNave->SetupAttachment(RootComponent);
     MallaNave->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -43,7 +45,7 @@ ANaveJugador::ANaveJugador()
     if (ModeloNaveAsset.Succeeded())
     {
         MallaNave->SetSkeletalMesh(ModeloNaveAsset.Object);
-        MallaNave->SetRelativeRotation(FRotator(0, -90, 0));    // Ajuste de orientación
+        MallaNave->SetRelativeRotation(FRotator(0, -90, 0));   
         MallaNave->SetRelativeScale3D(FVector(2.5f, 2.5f, 2.5f));
     }
 
@@ -61,6 +63,9 @@ ANaveJugador::ANaveJugador()
     Inventario = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventario"));
     FachadaNave = CreateDefaultSubobject<UNaveFacade>(TEXT("FachadaNave"));
 
+
+    ComponenteAudio = CreateDefaultSubobject<UAudioManager>(TEXT("ComponenteAudio"));
+
     IntegridadEstructural = 100.0f;
     VelocidadMovimiento = 1000.0f;
     VelocidadRotacion = 85.0f;
@@ -74,10 +79,49 @@ ANaveJugador::ANaveJugador()
 void ANaveJugador::BeginPlay()
 {
     Super::BeginPlay();
+
+
+    UGameUserSettings* AjustesJuego = UGameUserSettings::GetGameUserSettings();
+    if (AjustesJuego)
+    {
+
+        AjustesJuego->SetFullscreenMode(EWindowMode::Fullscreen);
+
+
+        AjustesJuego->ApplySettings(true);
+    }
+
     ANavesArcadeGameMode* GameMode = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
     if (Inventario && GameMode)
     {
         Inventario->SetRequerimientoNivel(GameMode->GetNucleosRequeridos());
+    }
+
+
+    FString NombreMapa = GetWorld()->GetMapName();
+    NombreMapa.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
+
+    if (!NombreMapa.Contains("Menu"))
+    {
+        if (ComponenteAudio)
+        {
+            ComponenteAudio->PlaySoundMusicaFondo();
+        }
+    }
+
+    if (!NombreMapa.Contains("Menu"))
+    {
+        // Obtenemos el Player Controller
+        APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+        if (PC)
+        {
+            // Forzamos al motor a escuchar solo el juego (ignorar clicks de menús fantasma)
+            FInputModeGameOnly ModoJuego;
+            PC->SetInputMode(ModoJuego);
+
+            // Ocultamos el cursor del ratón para mayor inmersión
+            PC->bShowMouseCursor = false;
+        }
     }
 }
 
@@ -98,20 +142,38 @@ void ANaveJugador::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
     if (!PlayerInputComponent) return;
 
     PlayerInputComponent->BindAxis("MoverAdelante", this, &ANaveJugador::MoverAdelante);
+    PlayerInputComponent->BindAxis("MoverDerecha", this, &ANaveJugador::MoverDerecha);
     PlayerInputComponent->BindAxis("RotarDerecha", this, &ANaveJugador::RotarDerecha);
     PlayerInputComponent->BindAxis("RotarArriba", this, &ANaveJugador::RotarArriba);
     PlayerInputComponent->BindAction("Disparar", IE_Pressed, this, &ANaveJugador::InicializarDisparo);
+    PlayerInputComponent->BindAction("CerrarJuego", IE_Pressed, this, &ANaveJugador::SalirDelJuego);
+    PlayerInputComponent->BindAction("CerrarJuego", IE_Pressed, this, &ANaveJugador::SalirDelJuego);
+    FInputActionBinding& PausaBinding = PlayerInputComponent->BindAction("PausarJuego", IE_Pressed, this, &ANaveJugador::TogglePausa);
+    PausaBinding.bExecuteWhenPaused = true;
 }
 
 void ANaveJugador::InicializarDisparo()
 {
     if (IntegridadEstructural <= 0.0f) return;
     if (FachadaNave) FachadaNave->EjecutarDisparo();
+    if (ComponenteAudio)
+    {
+        ComponenteAudio->PlaySoundDisparo();
+    }
 }
 
 void ANaveJugador::MoverAdelante(float Valor)
 {
     if (Valor != 0.0f) AddActorWorldOffset(GetActorForwardVector() * Valor * VelocidadMovimiento * GetWorld()->GetDeltaSeconds(), false);
+}
+
+void ANaveJugador::MoverDerecha(float Valor)
+{
+    if (Valor != 0.0f)
+    {
+        
+        AddActorWorldOffset(GetActorRightVector() * Valor * VelocidadMovimiento * GetWorld()->GetDeltaSeconds(), false);
+    }
 }
 
 void ANaveJugador::RotarDerecha(float Valor)
@@ -129,7 +191,6 @@ void ANaveJugador::RecibirDano(float CantidadDano)
     if (IntegridadEstructural <= 0.0f) return;
 
     IntegridadEstructural -= CantidadDano;
-
     MultiplicadorCombo = 1.0f;
     TiempoTemblorCamara = 0.5f;
 
@@ -141,19 +202,27 @@ void ANaveJugador::RecibirDano(float CantidadDano)
         SetActorHiddenInGame(true);
         SetActorEnableCollision(false);
 
-        if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, TEXT("¡NAVE DESTRUIDA! Respawn en 2 segundos..."));
+        // Sonido de explosion de la nave
+        if (ComponenteAudio) ComponenteAudio->PlaySoundExplosion();
 
         APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
         if (PC) PC->DisableInput(PC);
 
         if (VidasActuales > 0)
         {
+            // Ejecutamos el sonido de PERDER UNA VIDA
+            if (ComponenteAudio) ComponenteAudio->PlaySoundMenosVida();
+            if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, TEXT("¡NAVE DESTRUIDA! Respawn en 2 segundos..."));
+
             FTimerHandle TimerRespawn;
             GetWorldTimerManager().SetTimer(TimerRespawn, this, &ANaveJugador::Reaparecer, 2.0f, false);
         }
         else
         {
+            // Ejecutamos el sonido épico de GAME OVER TOTAL
+            if (ComponenteAudio) ComponenteAudio->PlaySoundDerrota();
             if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, TEXT("GAME OVER - Reiniciando nivel..."));
+
             FTimerHandle TimerReinicio;
             GetWorldTimerManager().SetTimer(TimerReinicio, this, &ANaveJugador::ReiniciarNivel, 3.5f, false);
         }
@@ -188,6 +257,12 @@ void ANaveJugador::RecolectarEnergia(float Cantidad)
         if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, TEXT("¡PORTAL ABIERTO! ¡ESCAPA!"));
         FVector UbicacionPortal = GetActorLocation() + (GetActorForwardVector() * 6000.0f);
         GetWorld()->SpawnActor<APortalSalto>(APortalSalto::StaticClass(), UbicacionPortal, FRotator::ZeroRotator);
+
+        // --- INTEGRACIÓN: Sonido de victoria/portal abierto ---
+        if (ComponenteAudio)
+        {
+            ComponenteAudio->PlaySoundSalto();
+        }
     }
     else
     {
@@ -217,4 +292,23 @@ void ANaveJugador::ReiniciarNivel()
 void ANaveJugador::Destroyed()
 {
     Super::Destroyed();
+}
+
+void ANaveJugador::SalirDelJuego()
+{
+    
+    UKismetSystemLibrary::QuitGame(GetWorld(), UGameplayStatics::GetPlayerController(GetWorld(), 0), EQuitPreference::Quit, false);
+}
+
+void ANaveJugador::TogglePausa()
+{
+    APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    if (PC)
+    {
+       
+        bool bEstaPausado = UGameplayStatics::IsGamePaused(GetWorld());
+
+        
+        UGameplayStatics::SetGamePaused(GetWorld(), !bEstaPausado);
+    }
 }

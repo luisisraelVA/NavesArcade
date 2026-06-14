@@ -104,7 +104,7 @@ void ANavesArcadeGameMode::ActualizarRequerimientoPorNivel()
     {
         NucleosRequeridos = 1;
     }
-    else if (NivelActual <= 2) NucleosRequeridos = 3;
+    else if (NivelActual <= 2) NucleosRequeridos = 1;
     else if (NivelActual <= 4) NucleosRequeridos = 4;
     else if (NivelActual <= 6) NucleosRequeridos = 5;
     else if (NivelActual <= 9) NucleosRequeridos = 6;

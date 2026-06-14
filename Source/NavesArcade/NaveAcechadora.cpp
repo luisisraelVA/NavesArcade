@@ -24,7 +24,7 @@ ANaveAcechadora::ANaveAcechadora()
     if (MeshObj.Succeeded())
     {
         MallaEnemigo->SetStaticMesh(MeshObj.Object);
-        MallaEnemigo->SetRelativeScale3D(FVector(0.8f));
+        MallaEnemigo->SetRelativeScale3D(FVector(0.3f));
         MallaEnemigo->SetRelativeRotation(FRotator(0, 90, 0));
     }
 

@@ -16,25 +16,24 @@
 #include "TimerManager.h"
 #include "NavesArcadeGameMode.h"
 #include "GameFramework/GameUserSettings.h"
+#include "Sound/AmbientSound.h"
+#include "Components/AudioComponent.h"
 
 ANaveJugador::ANaveJugador()
 {
     PrimaryActorTick.bCanEverTick = true;
 
-    // Esfera de colisión raíz (solapamiento: daño, núcleos, portales)
     ColisionNave = CreateDefaultSubobject<USphereComponent>(TEXT("ColisionNave"));
     RootComponent = ColisionNave;
     ColisionNave->InitSphereRadius(80.0f);
     ColisionNave->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
     ColisionNave->SetGenerateOverlapEvents(true);
 
-    // Esfera de colisión física (bloquea contra la nodriza y escenarios)
     ColisionFisica = CreateDefaultSubobject<USphereComponent>(TEXT("ColisionFisica"));
     ColisionFisica->SetupAttachment(RootComponent);
     ColisionFisica->InitSphereRadius(80.0f);
-    ColisionFisica->SetCollisionProfileName(TEXT("Pawn"));    
+    ColisionFisica->SetCollisionProfileName(TEXT("Pawn"));
     ColisionFisica->SetGenerateOverlapEvents(false);
-
 
     MallaNave = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MallaNaveVisual"));
     MallaNave->SetupAttachment(RootComponent);
@@ -45,13 +44,19 @@ ANaveJugador::ANaveJugador()
     if (ModeloNaveAsset.Succeeded())
     {
         MallaNave->SetSkeletalMesh(ModeloNaveAsset.Object);
-        MallaNave->SetRelativeRotation(FRotator(0, -90, 0));   
+        MallaNave->SetRelativeRotation(FRotator(0, -90, 0));
         MallaNave->SetRelativeScale3D(FVector(2.5f, 2.5f, 2.5f));
     }
 
     BrazoCamara = CreateDefaultSubobject<USpringArmComponent>(TEXT("BrazoCamara"));
     BrazoCamara->SetupAttachment(RootComponent);
-    BrazoCamara->TargetArmLength = 500.0f;
+
+    // --- CÁMARA ELEVADA TIPO JUEGO AAA ---
+    BrazoCamara->TargetArmLength = 600.0f; // Distancia cómoda
+    BrazoCamara->SocketOffset = FVector(0.0f, 0.0f, 180.0f); // Elevamos la cámara por encima de la nave
+    BrazoCamara->SetRelativeRotation(FRotator(-5.0f, 0.0f, 0.0f)); // Inclinamos un poco hacia abajo
+    // ---------------------------------
+
     BrazoCamara->bEnableCameraLag = true;
     BrazoCamara->CameraLagSpeed = 3.0f;
     BrazoCamara->bEnableCameraRotationLag = true;
@@ -62,8 +67,6 @@ ANaveJugador::ANaveJugador()
 
     Inventario = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventario"));
     FachadaNave = CreateDefaultSubobject<UNaveFacade>(TEXT("FachadaNave"));
-
-
     ComponenteAudio = CreateDefaultSubobject<UAudioManager>(TEXT("ComponenteAudio"));
 
     IntegridadEstructural = 100.0f;
@@ -105,8 +108,9 @@ void ANaveJugador::BeginPlay()
     {
         if (ComponenteAudio)
         {
-            ComponenteAudio->PlaySoundMusicaFondo();
+            //ComponenteAudio->PlaySoundMusicaFondo();
         }
+        APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
     }
 
     if (!NombreMapa.Contains("Menu"))
@@ -131,7 +135,9 @@ void ANaveJugador::Tick(float DeltaTime)
     if (TiempoTemblorCamara > 0.0f)
     {
         TiempoTemblorCamara -= DeltaTime;
+        // Tiembla desde el centro
         BrazoCamara->SocketOffset = FVector(FMath::RandRange(-20.f, 20.f), FMath::RandRange(-20.f, 20.f), FMath::RandRange(-20.f, 20.f));
+        // Cuando termina, vuelve al centro perfecto
         if (TiempoTemblorCamara <= 0.0f) BrazoCamara->SocketOffset = FVector::ZeroVector;
     }
 }
@@ -147,12 +153,25 @@ void ANaveJugador::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
     PlayerInputComponent->BindAxis("RotarArriba", this, &ANaveJugador::RotarArriba);
     PlayerInputComponent->BindAction("Disparar", IE_Pressed, this, &ANaveJugador::InicializarDisparo);
     PlayerInputComponent->BindAction("CerrarJuego", IE_Pressed, this, &ANaveJugador::SalirDelJuego);
-    PlayerInputComponent->BindAction("CerrarJuego", IE_Pressed, this, &ANaveJugador::SalirDelJuego);
+
     FInputActionBinding& PausaBinding = PlayerInputComponent->BindAction("PausarJuego", IE_Pressed, this, &ANaveJugador::TogglePausa);
     PausaBinding.bExecuteWhenPaused = true;
 
     FInputActionBinding& MenuBinding = PlayerInputComponent->BindAction("VolverMenu", IE_Pressed, this, &ANaveJugador::VolverAlMenu);
-    MenuBinding.bExecuteWhenPaused = true; // ¡Importante! Funciona aunque el juego esté en pausa
+    MenuBinding.bExecuteWhenPaused = true;
+
+    
+    PlayerInputComponent->BindAction("SaltarNivel", IE_Pressed, this, &ANaveJugador::SaltarNivelDev);
+}
+
+void ANaveJugador::SaltarNivelDev()
+{
+    ANavesArcadeGameMode* GM = Cast<ANavesArcadeGameMode>(GetWorld()->GetAuthGameMode());
+    if (GM)
+    {
+        if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Orange, TEXT("DEV HACK: Forzando salto de nivel..."));
+        GM->AvanzarSiguienteNivel();
+    }
 }
 
 void ANaveJugador::InicializarDisparo()
@@ -222,6 +241,19 @@ void ANaveJugador::RecibirDano(float CantidadDano)
         }
         else
         {
+            // --- NUEVO: DETENER LA MÚSICA DEL NIVEL AL MORIR ---
+            TArray<AActor*> MúsicasDelMapa;
+            UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAmbientSound::StaticClass(), MúsicasDelMapa);
+            for (AActor* ActorMusica : MúsicasDelMapa)
+            {
+                AAmbientSound* Ambient = Cast<AAmbientSound>(ActorMusica);
+                if (Ambient && Ambient->GetAudioComponent())
+                {
+                    Ambient->GetAudioComponent()->Stop(); // Apaga la música de fondo
+                }
+            }
+            // --------------------------------------------------
+
             // Ejecutamos el sonido épico de GAME OVER TOTAL
             if (ComponenteAudio) ComponenteAudio->PlaySoundDerrota();
             if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, TEXT("GAME OVER - Reiniciando nivel..."));

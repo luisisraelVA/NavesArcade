@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "NaveJugador.h"
 #include "GameAssets.h"
+#include "Sound/SoundBase.h"
 
 ADronSuicida::ADronSuicida()
 {
@@ -25,6 +26,12 @@ ADronSuicida::ADronSuicida()
             // Ajusta la rotación si la nave no mira hacia adelante
             Malla->SetRelativeRotation(FRotator(0, -90, 0));
        
+    }
+
+    static ConstructorHelpers::FObjectFinder<USoundBase> AudioImpactoObj(TEXT("SoundWave'/Game/Sonidos/impacto.impacto'"));
+    if (AudioImpactoObj.Succeeded())
+    {
+        SonidoImpactoDron = AudioImpactoObj.Object;
     }
 
     VelocidadCarga = 700.0f;
@@ -62,7 +69,16 @@ void ADronSuicida::AlImpactar(UPrimitiveComponent* OverlappedComponent, AActor* 
     ANaveJugador* Jugador = Cast<ANaveJugador>(OtherActor);
     if (Jugador)
     {
+        // 1. Reproducimos el sonido en la ubicación exacta del choque
+        if (SonidoImpactoDron)
+        {
+            UGameplayStatics::PlaySoundAtLocation(this, SonidoImpactoDron, GetActorLocation());
+        }
+
+        // 2. Aplicamos el daño al jugador
         Jugador->RecibirDano(DanoExplosion);
+
+        // 3. Nos destruimos
         Destroy();
     }
 }

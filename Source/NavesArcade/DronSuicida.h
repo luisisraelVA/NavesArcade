@@ -30,6 +30,9 @@ protected:
 
     bool bActivado = false;
 
+    UPROPERTY()
+    class USoundBase* SonidoImpactoDron;
+
     UFUNCTION()
     void AlImpactar(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };

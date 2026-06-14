@@ -14,6 +14,9 @@ public:
     virtual void Tick(float DeltaTime) override;
     virtual void RecibirDano(float Dano) override;
 
+    float GetVidaActual() const { return VidaActual; }
+    float GetVidaMaxima() const { return VidaMaxima; }
+
 protected:
     virtual void BeginPlay() override;
     virtual void Destroyed() override;

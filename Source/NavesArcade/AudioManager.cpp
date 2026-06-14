@@ -26,18 +26,26 @@ UAudioManager::UAudioManager()
     static ConstructorHelpers::FObjectFinder<USoundBase> AudioNucleoObj(TEXT("SoundWave'/Game/Sonidos/nucleopickup.nucleopickup'"));
     if (AudioNucleoObj.Succeeded()) SonidoNucleo = AudioNucleoObj.Object;
 
-    // MUSICA DE FONDO
-    static ConstructorHelpers::FObjectFinder<USoundBase> AudioMusicaObj(TEXT("SoundWave'/Game/Sonidos/SonidoFondo.SonidoFondo'"));
-    if (AudioMusicaObj.Succeeded())
+    //// MUSICA DE FONDO
+    //static ConstructorHelpers::FObjectFinder<USoundBase> AudioMusicaObj(TEXT("SoundWave'/Game/Sonidos/SonidoFondo.SonidoFondo'"));
+    //if (AudioMusicaObj.Succeeded())
+    //{
+    //    MusicaFondo = AudioMusicaObj.Object;
+
+    //    // --- TRUCO PRO: Forzamos el bucle infinito directamente por código ---
+    //    if (USoundWave* WaveMusica = Cast<USoundWave>(MusicaFondo))
+    //    {
+    //        WaveMusica->bLooping = true; // Esto hace que se repita para siempre
+    //    }
+
+    //}
+
+    MusicaFondo = nullptr;
+
+    if (MusicaComponent)
     {
-        MusicaFondo = AudioMusicaObj.Object;
-
-        // --- TRUCO PRO: Forzamos el bucle infinito directamente por código ---
-        if (USoundWave* WaveMusica = Cast<USoundWave>(MusicaFondo))
-        {
-            WaveMusica->bLooping = true; // Esto hace que se repita para siempre
-        }
-
+        MusicaComponent->SetSound(nullptr); // Vaciamos el componente a la fuerza
+        MusicaComponent->bAutoActivate = false;
     }
 
     // GAME OVER Y MENOS VIDA

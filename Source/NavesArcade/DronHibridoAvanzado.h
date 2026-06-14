@@ -31,5 +31,8 @@ protected:
 
     FTimerHandle TimerDisparo;
 
+    UPROPERTY()
+    class USoundBase* SonidoDisparoEnemigo;
+
     void DispararRafaga();
 };

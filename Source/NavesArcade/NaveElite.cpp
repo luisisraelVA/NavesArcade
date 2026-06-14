@@ -3,6 +3,7 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
 #include "Proyectil.h"
+#include "Sound/SoundBase.h"
 #include "GameAssets.h"
 #include "Components/SphereComponent.h"
 
@@ -24,6 +25,13 @@ ANaveElite::ANaveElite()
 
     Escudo = 30.0f;
     Salud = 20.0f;
+
+    // Cargamos el sonido del disparo enemigo
+    static ConstructorHelpers::FObjectFinder<USoundBase> AudioDisparoObj(TEXT("SoundWave'/Game/Sonidos/DisparoEnemigos.DisparoEnemigos'"));
+    if (AudioDisparoObj.Succeeded())
+    {
+        SonidoDisparoEnemigo = AudioDisparoObj.Object;
+    }
 }
 
 void ANaveElite::BeginPlay()
@@ -49,9 +57,15 @@ void ANaveElite::Disparar()
     FVector Dir = (Jugador->GetActorLocation() - GetActorLocation()).GetSafeNormal();
     FVector Origen = GetActorLocation() + Dir * 200.0f;
 
+    // Reproducimos el sonido al disparar
+    if (SonidoDisparoEnemigo)
+    {
+        UGameplayStatics::PlaySoundAtLocation(this, SonidoDisparoEnemigo, GetActorLocation());
+    }
+
     FActorSpawnParameters Params;
     Params.Owner = this;
-    Params.Instigator = this;               
+    Params.Instigator = this;
     Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), Origen, Dir.Rotation(), Params);
 }

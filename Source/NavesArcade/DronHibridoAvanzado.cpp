@@ -6,6 +6,7 @@
 #include "NaveJugador.h"
 #include "NavesArcadeGameMode.h"
 #include "LevelBuilder.h"
+#include "Sound/SoundBase.h"
 #include "Components/SphereComponent.h"
 #include "GameAssets.h"
 
@@ -33,6 +34,12 @@ ADronHibridoAvanzado::ADronHibridoAvanzado()
     Tags.Add(FName("Enemy"));
     VelocidadMovimiento = 400.0f;
     DistanciaDisparo = 1200.0f;
+
+    static ConstructorHelpers::FObjectFinder<USoundBase> AudioDisparoObj(TEXT("SoundWave'/Game/Sonidos/DisparoEnemigos.DisparoEnemigos'"));
+    if (AudioDisparoObj.Succeeded())
+    {
+        SonidoDisparoEnemigo = AudioDisparoObj.Object;
+    }
 }
 
 void ADronHibridoAvanzado::BeginPlay()
@@ -59,13 +66,19 @@ void ADronHibridoAvanzado::DispararRafaga()
     FVector Dir = (Objetivo->GetActorLocation() - GetActorLocation()).GetSafeNormal();
     FVector Origen = GetActorLocation() + Dir * 200.0f;
 
+    // Reproducimos el sonido una vez por ráfaga
+    if (SonidoDisparoEnemigo)
+    {
+        UGameplayStatics::PlaySoundAtLocation(this, SonidoDisparoEnemigo, GetActorLocation());
+    }
+
     for (int32 i = -1; i <= 1; ++i)
     {
         FRotator Rot = Dir.Rotation();
         Rot.Yaw += i * 15.0f;
         FActorSpawnParameters Params;
         Params.Owner = this;
-        Params.Instigator = this;           
+        Params.Instigator = this;
         Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
         GetWorld()->SpawnActor<AProyectil>(AProyectil::StaticClass(), Origen, Rot, Params);
     }

@@ -22,4 +22,7 @@ protected:
 
     UPROPERTY()
     class APawn* Jugador;
+
+    UPROPERTY()
+    class USoundBase* SonidoDisparoEnemigo;
 };

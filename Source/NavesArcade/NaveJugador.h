@@ -12,7 +12,7 @@ class USphereComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputComponent;
-class UAudioManager; // Añade esta línea
+class UAudioManager;
 
 UCLASS()
 class NAVESARCADE_API ANaveJugador : public APawn
@@ -41,11 +41,14 @@ protected:
     virtual void Destroyed() override;
     void SalirDelJuego();
     void TogglePausa();
+    void VolverAlMenu();
+
+    // NUEVA FUNCIÓN PARA DEMOSTRACIÓN (DEV HACK)
+    void SaltarNivelDev();
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Colisión")
     USphereComponent* ColisionNave;
 
- 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Colisión")
     USphereComponent* ColisionFisica;
 
@@ -60,9 +63,6 @@ protected:
 
     UPROPERTY(EditAnywhere, Category = "Combate")
     TSubclassOf<AProyectil> ClaseProyectil;
-
-
-    void VolverAlMenu();
 
     void InicializarDisparo();
     void MoverAdelante(float Valor);
@@ -86,9 +86,6 @@ private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes", meta = (AllowPrivateAccess = "true"))
     UNaveFacade* FachadaNave;
 
-    
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes", meta = (AllowPrivateAccess = "true"))
     UAudioManager* ComponenteAudio;
-
-
 };

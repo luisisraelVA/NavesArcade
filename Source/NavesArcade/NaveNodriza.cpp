@@ -32,7 +32,7 @@ ANaveNodriza::ANaveNodriza()
     if (MeshObj.Succeeded())
     {
         MallaJefe->SetStaticMesh(MeshObj.Object);
-        MallaJefe->SetRelativeScale3D(FVector(8.0f));
+        MallaJefe->SetRelativeScale3D(FVector(5.0f));
         MallaJefe->SetRelativeRotation(FRotator(0, -90, 0));
     }
 
